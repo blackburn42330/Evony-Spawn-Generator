@@ -19,7 +19,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 200km away from rivals.")
-st.markdown("### 📋 Instructions:\n1. Do your first spawn from your spot in the hive and enter those coordinates below.\n2. Click **🥷 Calculate Next Closest Spawning Location** to get a safe location to teleport to.\n3. Type the coordinates of your **next spawn** into the new box that appears.\n4. Keep repeating these steps until you are completely done spawning monsters!")
+
+# 📖 Fully Clarified Instructions Step 1
+st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below (do NOT enter your own hive coordinates).\n2. Click **🥷 Calculate Next Closest Spawning Location** to get a safe location to teleport to.\n3. Type the coordinates of your **next spawn** into the new box that appears.\n4. Keep repeating these steps until you are completely done spawning monsters!")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -97,7 +99,6 @@ if st.button("🥷 Calculate Next Closest Spawning Location", type="primary"):
         min_x, max_x = CENTER_X - 350, CENTER_X + 350
         min_y, max_y = CENTER_Y - 350, CENTER_Y + 350
         min_x_iso, max_x_iso = min_x - max_y, max_x - min_y
-        min_y_iso, max_y_iso = min_x + min_y, max_x + min_y
         min_y_iso, max_y_iso = min_x + min_y, max_x + max_y
 
         hive_data = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
