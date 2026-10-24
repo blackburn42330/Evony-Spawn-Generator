@@ -214,7 +214,8 @@ if st.button("🥷 Calculate Next Target", type="primary"):
             width=500, height=450
         ).configure_view(strokeOpacity=0)
 
-        st.write("### 🗺️ Alliance Sector Map (400x400 Grid)")
+        # Replaced generic header with Ninja Clan Inc. custom title card
+        st.write("### 🥷 Ninja Clan Inc.")
         st.altair_chart(final_map, use_container_width=True)
 
     else:
