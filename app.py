@@ -26,11 +26,24 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🥷 NATIVE GRAPHIC DISPLAY OVERLAY (Bypasses all background restrictions)
-st.image(
-    "https://unsplash.com", 
-    caption="Ninja Clan Inc. Tactics Sector",
-    use_container_width=True
+# 🏰 Premium Visual Title Block Header Card (Native Icons Layout Bypass)
+st.markdown(
+    """
+    <div style="
+        background: radial-gradient(circle, #1a1c24 0%, #0d0e12 100%);
+        padding: 2.5rem 1rem;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        margin-bottom: 25px;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+    ">
+        <div style="font-size: 75px; filter: drop-shadow(0 0 15px rgba(255,215,0,0.3)); margin-bottom: 10px;">🥷</div>
+        <div style="font-family: 'Arial Black', Gadget, sans-serif; font-size: 26px; font-weight: bold; color: #FFFFFF; letter-spacing: 1px;">NINJA CLAN INC.</div>
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #FFD700; font-weight: bold; letter-spacing: 2px; margin-top: 5px;">TACTICS SECTOR</div>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
 st.title("🥷 Evony Spawn Generator")
