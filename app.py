@@ -136,7 +136,6 @@ st.write("---")
 
 # Calculation Logic
 if st.button("🥷 Calculate Next Target", type="primary"):
-    # Uses MATH_HIVE for calculation logic tracking
     x_range = np.arange(max(0, MATH_HIVE_X - 200), min(1200, MATH_HIVE_X + 200))
     y_range = np.arange(max(0, MATH_HIVE_Y - 200), min(1200, MATH_HIVE_Y + 200))
     
@@ -153,49 +152,52 @@ if st.button("🥷 Calculate Next Target", type="primary"):
     valid_y = Y[valid_mask]
     
     if len(valid_x) > 0:
-        # Measures proximity against the tactical MATH_HIVE coordinates
         dist_to_hive = np.sqrt((valid_x - MATH_HIVE_X)**2 + (valid_y - MATH_HIVE_Y)**2)
         closest_idx = np.argmin(dist_to_hive)
         
         target_x = int(valid_x[closest_idx])
         target_y = int(valid_y[closest_idx])
         
-        # Display the real distance from your TRUE castle location for accurate marching reports
-        true_dist = np.sqrt((target_x - TRUE_HIVE_X)**2 + (target_y - TRUE_HIVE_Y)**2)
+        # Measures exact distance from the real visual home base, rounded to a whole integer
+        true_dist = int(round(np.sqrt((target_x - TRUE_HIVE_X)**2 + (target_y - TRUE_HIVE_Y)**2)))
         
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
-        st.metric(label="Distance from Hive", value=f"{true_dist:.1f} km")
+        st.metric(label="Distance from Hive", value=f"{true_dist} km")
         
-        # Grid boundaries center around the calculation vector to preserve viewing consistency
+        # Explicit 400x400 map scaling grid boundary parameters centered on calculation spot
         min_x, max_x = MATH_HIVE_X - 200, MATH_HIVE_X + 200
         min_y, max_y = MATH_HIVE_Y - 200, MATH_HIVE_Y + 200
 
+        # Create numerical arrays for explicit axis line positioning
         x_ticks = list(range(min_x, max_x + 1, 20))
         y_ticks = list(range(min_y, max_y + 1, 20))
 
+        # Hardcoded Axis Shared Configurations
         x_axis_config = alt.Axis(values=x_ticks, format='d', grid=True)
         y_axis_config = alt.Axis(values=y_ticks, format='d', grid=True)
 
-        # Plot your TRUE castle location visually on the graph
-        hive_data = pd.DataFrame([{"X": TRUE_HIVE_X, "Y": TRUE_HIVE_Y, "Emoji": "🏰"}])
-        target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
-        spawn_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
-        spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
-
-        # Base layout binds the exact 20-unit increment scale configurations
+        # Base structural mapping definition sheet to enforce uniform scale steps globally
         base_chart = alt.Chart().encode(
             x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
             y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config)
         )
 
-        hive_layer = base_chart.transform_calculate(text="datum.Emoji").mark_text(size=35).encode(text='text:N').data(hive_data)
-        target_layer = base_chart.transform_calculate(text="datum.Emoji").mark_text(size=35).encode(text='text:N').data(target_data)
-        monster_layer = base_chart.transform_calculate(text="datum.Emoji").mark_text(size=28).encode(text='text:N').data(spawn_data)
+        # Build dataframes with explicit text characters included inside the columns
+        hive_data = pd.DataFrame([{"X": TRUE_HIVE_X, "Y": TRUE_HIVE_Y, "Emoji": "🏰"}])
+        target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
+        spawn_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
+        spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
+
+        # Plot components cleanly by pointing straight to the data text column
+        hive_layer = base_chart.mark_text(size=35).encode(text='Emoji:N').data(hive_data)
+        target_layer = base_chart.mark_text(size=35).encode(text='Emoji:N').data(target_data)
+        monster_layer = base_chart.mark_text(size=28).encode(text='Emoji:N').data(spawn_data)
         
         number_layer = base_chart.mark_text(
             size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
         ).encode(text='Num:N').data(spawn_data)
 
+        # Merge onto map container panel
         final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
