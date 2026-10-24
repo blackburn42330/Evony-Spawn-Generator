@@ -172,6 +172,10 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         min_x, max_x = HIVE_X - 200, HIVE_X + 200
         min_y, max_y = HIVE_Y - 200, HIVE_Y + 200
 
+        # Create numerical arrays for explicit axis line positioning
+        x_ticks = list(range(min_x, max_x + 1, 20))
+        y_ticks = list(range(min_y, max_y + 1, 20))
+
         # Dedicated Dataframes
         hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Emoji": "🏰"}])
         target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
@@ -179,34 +183,37 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         spawn_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
         spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
 
-        # Forced Scale Mapping: Locked to uniform 20-unit step grids
+        # Forced Grid Scale Layout: explicitly pass hardcoded coordinate arrays
+        x_axis_config = alt.Axis(values=x_ticks, format='d', grid=True)
+        y_axis_config = alt.Axis(values=y_ticks, format='d', grid=True)
+
         hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=alt.Axis(tickMinStep=20)),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=alt.Axis(tickMinStep=20)),
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
             text='Emoji:N'
         )
 
         target_layer = alt.Chart(target_data).mark_text(size=35).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=alt.Axis(tickMinStep=20)),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=alt.Axis(tickMinStep=20)),
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
             text='Emoji:N'
         )
 
         monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=alt.Axis(tickMinStep=20)),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=alt.Axis(tickMinStep=20)),
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
             text='Emoji:N'
         )
 
         number_layer = alt.Chart(spawn_data).mark_text(
             size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
         ).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=alt.Axis(tickMinStep=20)),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=alt.Axis(tickMinStep=20)),
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
             text='Num:N'
         )
 
-        # Merge layers onto the map framework
+        # Merge layers onto the final map frame
         final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
