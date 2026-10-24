@@ -149,15 +149,25 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{total_dist:.1f} km")
         
-        # 📊 Dynamic Map Visualizer Data Building Block
-        map_points = [{"X": HIVE_X, "Y": HIVE_Y, "Spot Type": "Hive Anchor (Gold)"}]
+        # 📊 Center-Optimized Data Assembly Block
+        map_points = [
+            {"X": HIVE_X, "Y": HIVE_Y, "Spot Type": "Hive Anchor (Gold)"},
+            {"X": target_x, "Y": target_y, "Spot Type": "Next Best Target (Green)"}
+        ]
+        
         for idx, (sx, sy) in enumerate(spawns, 1):
             map_points.append({"X": sx, "Y": sy, "Spot Type": f"Active Spawn {idx} (Red)"})
-        map_points.append({"X": target_x, "Y": target_y, "Spot Type": "Next Best Target (Green)"})
+            
+        # Injects 4 invisible border anchors to lock the 400x400 map dimensions centered around your hive
+        min_x, max_x = HIVE_X - 200, HIVE_X + 200
+        min_y, max_y = HIVE_Y - 200, HIVE_Y + 200
+        
+        map_points.append({"X": min_x, "Y": min_y, "Spot Type": "Sector Grid Edge"})
+        map_points.append({"X": max_x, "Y": max_y, "Spot Type": "Sector Grid Edge"})
         
         df = pd.DataFrame(map_points)
         
-        st.write("### 🗺️ Alliance Sector Map")
+        st.write("### 🗺️ Alliance Sector Map (400x400 Grid)")
         st.scatter_chart(
             data=df,
             x="X",
