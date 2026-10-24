@@ -95,9 +95,9 @@ st.write("---")
 
 # Tactical Scanning Algorithm
 if st.button("🥷 Calculate Next Target", type="primary"):
-    # Expanded grid generation parameters to 700 x 700 square layout scope
-    x_range = np.arange(max(0, HIVE_X - 350), min(1200, HIVE_X + 350))
-    y_range = np.arange(max(0, HIVE_Y - 350), min(1200, HIVE_Y + 350))
+    # Broad global matrix generator sweep (Allows the algorithm to explore options over the full map grid)
+    x_range = np.arange(0, 1200)
+    y_range = np.arange(0, 1200)
     X, Y = np.meshgrid(x_range, y_range)
     X, Y = X.flatten(), Y.flatten()
     valid_mask = np.ones_like(X, dtype=bool)
@@ -126,9 +126,10 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{true_dist} km")
         
-        # Symmetric 700x700 map dimension bounds configuration markers
-        min_x, max_x = HIVE_X - 350, HIVE_X + 350
-        min_y, max_y = HIVE_Y - 350, HIVE_Y + 350
+        # 🎯 VISUAL RE-CENTER OVERRIDE: Centers the 700x700 map frame perfectly on coordinates (600, 600)
+        CENTER_X, CENTER_Y = 600, 600
+        min_x, max_x = CENTER_X - 350, CENTER_X + 350
+        min_y, max_y = CENTER_Y - 350, CENTER_Y + 350
 
         # Calculate isometric visual scaling parameters 
         min_x_iso = min_x - max_y
@@ -171,4 +172,4 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.write("### 🥷 Ninja Clan Inc.")
         st.altair_chart(final_map, use_container_width=True)
     else:
-        st.error("No valid coordinates found in the search sector. Try clearing some old spawns or moving further out!")
+        st.error("No valid coordinates found on the map grid. Try clearing some old spawns!")
