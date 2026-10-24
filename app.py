@@ -172,28 +172,44 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         x_axis_config = alt.Axis(values=x_ticks, format='d', grid=True)
         y_axis_config = alt.Axis(values=y_ticks, format='d', grid=True)
 
-        # Base structural mapping definition sheet to enforce uniform scale steps globally
-        base_chart = alt.Chart().encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config)
-        )
-
+        # Build dataframes up front
         hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Emoji": "🏰"}])
         target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
         spawn_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
         spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
 
-        # Create sub-layers mapped to the shared base coordinate scale definitions
-        hive_text = base_chart.transform_calculate(text="datum.Emoji").mark_text(size=35).encode(text='text:N').data(hive_data)
-        target_text = base_chart.transform_calculate(text="datum.Emoji").mark_text(size=35).encode(text='text:N').data(target_data)
-        monster_text = base_chart.transform_calculate(text="datum.Emoji").mark_text(size=28).encode(text='text:N').data(spawn_data)
-        
-        number_layer = base_chart.mark_text(
-            size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
-        ).encode(text='Num:N').data(spawn_data)
+        # 1. Hive Layer Structure
+        hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
+        )
 
-        # Merge onto map container panel
-        final_map = alt.layer(hive_text, target_text, monster_text, number_layer).properties(
+        # 2. Target Layer Structure
+        target_layer = alt.Chart(target_data).mark_text(size=35).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
+        )
+
+        # 3. Monster Layer Structure
+        monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
+        )
+        
+        # 4. Number Overlays
+        number_layer = alt.Chart(spawn_data).mark_text(
+            size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
+        ).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Num:N'
+        )
+
+        # Combine all separate component layers cleanly onto one dashboard canvas
+        final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
 
