@@ -134,7 +134,6 @@ st.write("---")
 
 # Calculation Logic
 if st.button("🥷 Calculate Next Target", type="primary"):
-    # Generate broad map search sector around the true hive coordinates (400x400 area)
     x_range = np.arange(max(0, HIVE_X - 200), min(1200, HIVE_X + 200))
     y_range = np.arange(max(0, HIVE_Y - 200), min(1200, HIVE_Y + 200))
     
@@ -144,12 +143,12 @@ if st.button("🥷 Calculate Next Target", type="primary"):
     
     valid_mask = np.ones_like(X, dtype=bool)
     
-    # 1. Enforce 140km exclusion check for your active monster spawns
+    # 1. Active monster spawn check (140km)
     for sx, sy in spawns:
         dist_to_spawn = np.sqrt((X - sx)**2 + (Y - sy)**2)
         valid_mask &= (dist_to_spawn > 140)
         
-    # 2. Enforce 175km safety protection buffer from rival alliances
+    # 2. Rival alliance buffer check (175km)
     rivals = [(320, 483), (611, 551), (672, 771)]
     for rx, ry in rivals:
         dist_to_rival = np.sqrt((X - rx)**2 + (Y - ry)**2)
@@ -159,7 +158,6 @@ if st.button("🥷 Calculate Next Target", type="primary"):
     valid_y = Y[valid_mask]
     
     if len(valid_x) > 0:
-        # Measures proximity directly to your TRUE hive coordinates
         dist_to_hive = np.sqrt((valid_x - HIVE_X)**2 + (valid_y - HIVE_Y)**2)
         closest_idx = np.argmin(dist_to_hive)
         
@@ -185,28 +183,39 @@ if st.button("🥷 Calculate Next Target", type="primary"):
             y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config)
         )
 
+        # Isolated pure dataframes to prevent engine data-link crashes
         hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Emoji": "🏰"}])
         target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
-        spawn_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
         
-        # Include rival alliance hubs on the visual minimap as caution skulls (💀) if they are in the viewing window
+        monster_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
+        monster_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
+        
+        rival_list = []
         for rx, ry in rivals:
             if min_x <= rx <= max_x and min_y <= ry <= max_y:
-                spawn_list.append({"X": rx, "Y": ry, "Emoji": "💀", "Num": "RIVAL"})
-                
-        spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
+                rival_list.append({"X": rx, "Y": ry, "Emoji": "💀"})
+        rival_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=["X", "Y", "Emoji"])
 
-        hive_layer = base_chart.mark_text(size=35).encode(text='Emoji:N').data(hive_data)
-        target_layer = base_chart.mark_text(size=35).encode(text='Emoji:N').data(target_data)
+        # Create isolated mapping components explicitly referencing data columns directly up front
+        hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(text='Emoji:N')
+        target_layer = alt.Chart(target_data).mark_text(size=35).encode(text='Emoji:N')
+        monster_layer = alt.Chart(monster_data).mark_text(size=28).encode(text='Emoji:N')
         
-        # Filters standard monster spawns from rival indicator targets
-        monster_layer = base_chart.mark_text(size=28).encode(text='Emoji:N').data(spawn_data)
+        # Dedicated rival skull layer with its own clean dataframe
+        rival_layer = alt.Chart(rival_data).mark_text(size=28).encode(text='Emoji:N')
         
-        number_layer = base_chart.mark_text(
+        number_layer = alt.Chart(monster_data).mark_text(
             size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
-        ).encode(text='Num:N').data(spawn_data[spawn_data['Num'] != 'RIVAL'])
+        ).encode(text='Num:N')
 
-        final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(
+        # Compile all sub-layers cleanly through the base_chart engine parent template wrapper
+        final_map = alt.layer(
+            base_chart.data(hive_data) + hive_layer,
+            base_chart.data(target_data) + target_layer,
+            base_chart.data(monster_data) + monster_layer,
+            base_chart.data(monster_data) + number_layer,
+            base_chart.data(rival_data) + rival_layer
+        ).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
 
