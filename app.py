@@ -68,62 +68,74 @@ st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 # Reset Functionality
 if st.button("🔄 Clear All Fields", type="secondary"):
     for i in range(1, 6):
-        st.session_state[f"x_{i}"] = None
-        st.session_state[f"y_{i}"] = None
+        st.session_state[f"x_{i}"] = ""
+        st.session_state[f"y_{i}"] = ""
     st.rerun()
 
 st.subheader("📍 Active Spawns")
 
-# Set up defaults as None (completely blank) in session state if they don't exist
+# Set up defaults as empty strings (completely blank text boxes)
 for i in range(1, 6):
-    if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = None
-    if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = None
+    if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
+    if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
 
 spawns = []
 
-# Helper function to check if a value is a valid entered coordinate
-def is_valid(val):
-    return val is not None and val > 0
+# Helper function to validate and convert text inputs to real numbers safely
+def get_coord(val_string):
+    try:
+        val = int(val_string.strip())
+        if 0 <= val <= 1200:
+            return val
+    except ValueError:
+        pass
+    return None
 
-# --- Dynamic Cascading Logic with Clean Value Verification ---
+# --- Dynamic Cascading Logic with Clean Text Inputs ---
 
 # Spawn 1: Always Visible
-x_1 = st.number_input("Spawn 1 X", min_value=0, max_value=1200, step=1, value=st.session_state["x_1"], key="x_1", placeholder="Type X...")
-y_1 = st.number_input("Spawn 1 Y", min_value=0, max_value=1200, step=1, value=st.session_state["y_1"], key="y_1", placeholder="Type Y...")
+x_in_1 = st.text_input("Spawn 1 X", value=st.session_state["x_1"], key="x_1", placeholder="Type X coordinate...")
+y_in_1 = st.text_input("Spawn 1 Y", value=st.session_state["y_1"], key="y_1", placeholder="Type Y coordinate...")
 
-if is_valid(x_1) and is_valid(y_1):
+x_1, y_1 = get_coord(x_in_1), get_coord(y_in_1)
+
+if x_1 is not None and y_1 is not None:
     spawns.append((x_1, y_1))
     st.write("---")
     
     # Spawn 2
-    x_2 = st.number_input("Spawn 2 X", min_value=0, max_value=1200, step=1, value=st.session_state["x_2"], key="x_2", placeholder="Type X...")
-    y_2 = st.number_input("Spawn 2 Y", min_value=0, max_value=1200, step=1, value=st.session_state["y_2"], key="y_2", placeholder="Type Y...")
+    x_in_2 = st.text_input("Spawn 2 X", value=st.session_state["x_2"], key="x_2", placeholder="Type X coordinate...")
+    y_in_2 = st.text_input("Spawn 2 Y", value=st.session_state["y_2"], key="y_2", placeholder="Type Y coordinate...")
+    x_2, y_2 = get_coord(x_in_2), get_coord(y_in_2)
     
-    if is_valid(x_2) and is_valid(y_2):
+    if x_2 is not None and y_2 is not None:
         spawns.append((x_2, y_2))
         st.write("---")
         
         # Spawn 3
-        x_3 = st.number_input("Spawn 3 X", min_value=0, max_value=1200, step=1, value=st.session_state["x_3"], key="x_3", placeholder="Type X...")
-        y_3 = st.number_input("Spawn 3 Y", min_value=0, max_value=1200, step=1, value=st.session_state["y_3"], key="y_3", placeholder="Type Y...")
+        x_in_3 = st.text_input("Spawn 3 X", value=st.session_state["x_3"], key="x_3", placeholder="Type X coordinate...")
+        y_in_3 = st.text_input("Spawn 3 Y", value=st.session_state["y_3"], key="y_3", placeholder="Type Y coordinate...")
+        x_3, y_3 = get_coord(x_in_3), get_coord(y_in_3)
         
-        if is_valid(x_3) and is_valid(y_3):
+        if x_3 is not None and y_3 is not None:
             spawns.append((x_3, y_3))
             st.write("---")
             
             # Spawn 4
-            x_4 = st.number_input("Spawn 4 X", min_value=0, max_value=1200, step=1, value=st.session_state["x_4"], key="x_4", placeholder="Type X...")
-            y_4 = st.number_input("Spawn 4 Y", min_value=0, max_value=1200, step=1, value=st.session_state["y_4"], key="y_4", placeholder="Type Y...")
+            x_in_4 = st.text_input("Spawn 4 X", value=st.session_state["x_4"], key="x_4", placeholder="Type X coordinate...")
+            y_in_4 = st.text_input("Spawn 4 Y", value=st.session_state["y_4"], key="y_4", placeholder="Type Y coordinate...")
+            x_4, y_4 = get_coord(x_in_4), get_coord(y_in_4)
             
-            if is_valid(x_4) and is_valid(y_4):
+            if x_4 is not None and y_4 is not None:
                 spawns.append((x_4, y_4))
                 st.write("---")
                 
                 # Spawn 5
-                x_5 = st.number_input("Spawn 5 X", min_value=0, max_value=1200, step=1, value=st.session_state["x_5"], key="x_5", placeholder="Type X...")
-                y_5 = st.number_input("Spawn 5 Y", min_value=0, max_value=1200, step=1, value=st.session_state["y_5"], key="y_5", placeholder="Type Y...")
+                x_in_5 = st.text_input("Spawn 5 X", value=st.session_state["x_5"], key="x_5", placeholder="Type X coordinate...")
+                y_in_5 = st.text_input("Spawn 5 Y", value=st.session_state["y_5"], key="y_5", placeholder="Type Y coordinate...")
+                x_5, y_5 = get_coord(x_in_5), get_coord(y_in_5)
                 
-                if is_valid(x_5) and is_valid(y_5):
+                if x_5 is not None and y_5 is not None:
                     spawns.append((x_5, y_5))
 
 st.write("---")
