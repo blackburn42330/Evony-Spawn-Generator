@@ -18,8 +18,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🔄 Radius updated to 145km in the description
-st.write("Finds the closest available coordinate to the hive outside a 145km radius of your spawns and 200km away from rivals.")
+# 🔄 Radius reverted back to 140km in the description
+st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 200km away from rivals.")
 
 st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below (do NOT enter your own hive coordinates).\n2. Click **🥷 Calculate Next Closest Spawning Location** to get a safe location to teleport to.\n3. Type the coordinates of your **next spawn** into the new box that appears.\n4. Keep repeating these steps until you are completely done spawning monsters!")
 
@@ -81,8 +81,8 @@ if st.button("🥷 Calculate Next Closest Spawning Location", type="primary"):
     X, Y = X.flatten(), Y.flatten()
     valid_mask = np.ones_like(X, dtype=bool)
     
-    # 🔄 Mask calculation logic updated to 145km distance filter
-    for sx, sy in spawns: valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 145)
+    # 🔄 Mask calculation logic rolled back to 140km distance filter
+    for sx, sy in spawns: valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 140)
     rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
     for r in rivals: valid_mask &= (np.sqrt((X - r["X"])**2 + (r["Y"] - Y)**2) > 200)
     
