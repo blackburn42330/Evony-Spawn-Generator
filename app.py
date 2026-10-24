@@ -95,13 +95,14 @@ st.write("---")
 
 # Tactical Scanning Algorithm
 if st.button("🥷 Calculate Next Target", type="primary"):
-    x_range = np.arange(max(0, HIVE_X - 250), min(1200, HIVE_X + 250))
-    y_range = np.arange(max(0, HIVE_Y - 250), min(1200, HIVE_Y + 250))
+    # Expanded grid generation parameters to 700 x 700 square layout scope
+    x_range = np.arange(max(0, HIVE_X - 350), min(1200, HIVE_X + 350))
+    y_range = np.arange(max(0, HIVE_Y - 350), min(1200, HIVE_Y + 350))
     X, Y = np.meshgrid(x_range, y_range)
     X, Y = X.flatten(), Y.flatten()
     valid_mask = np.ones_like(X, dtype=bool)
     
-    # Exclusion 1: 140km active spawn buffer zone
+    # Exclusion 1: 140km active spawn zone
     for sx, sy in spawns:
         valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 140)
         
@@ -125,17 +126,16 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{true_dist} km")
         
-        # 500x500 map dimension bounds configuration markers
-        min_x, max_x = HIVE_X - 250, HIVE_X + 250
-        min_y, max_y = HIVE_Y - 250, HIVE_Y + 250
+        # Symmetric 700x700 map dimension bounds configuration markers
+        min_x, max_x = HIVE_X - 350, HIVE_X + 350
+        min_y, max_y = HIVE_Y - 350, HIVE_Y + 350
 
-        # Calculate isometric Visual parameters to stretch and rotate diamond boundaries securely
+        # Calculate isometric visual scaling parameters 
         min_x_iso = min_x - max_y
         max_x_iso = max_x - min_y
         min_y_iso = min_x + min_y
         max_y_iso = max_x + max_y
 
-        # Data sets mapped directly to the math transformation matrix (X-Y and X+Y)
         hive_data = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
         target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
         
@@ -144,11 +144,11 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         for r in rivals:
             rx, ry = r["X"], r["Y"]
             if min_x <= rx <= max_x and min_y <= ry <= max_y:
-                monster_list.append({"X_iso": rx - ry, "Y_iso": rx + ry, "Emoji": "💀", "TextLabel": r["Tag"], "Label": f"{r['Tag']} ({rx},{ry})"})
+                monster_list.append({"X_iso": rx - ry, "Y_iso": rx + ry, "Emoji": "💀", "TextLabel": r["Tag"], "Label": f"{r['Tag']} ({rx},{ry})"} )
                 
         spawn_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "TextLabel", "Label"])
 
-        # Isometric Scales: reverse=True on the vertical scale ensures (0,0) sits at the top point
+        # Isometric Scales: reverse=True on the vertical axis ensures (0,0) sits at the top point
         x_scale = alt.Scale(domain=[min_x_iso, max_x_iso])
         y_scale = alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
 
@@ -161,10 +161,8 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
         )
-        
-        # Labels Layer: Draws numbers for monsters or tags for enemy alliances right next to the symbol
         number_layer = alt.Chart(spawn_data).mark_text(
-            size=15, fontWeight='bold', color='#FFD700', dx=20, dy=-12
+            size=14, fontWeight='bold', color='#FFD700', dx=20, dy=-12
         ).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N'
         )
