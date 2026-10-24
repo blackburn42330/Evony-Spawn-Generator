@@ -81,36 +81,49 @@ for i in range(1, 6):
 
 spawns = []
 
-# Helper function to generate clean numeric input fields without default zeros
-def spawn_input(label_x, label_y, key_x, key_y):
-    val_x = st.number_input(label_x, min_value=0, max_value=1200, step=1, value=st.session_state[key_x], placeholder="Type X...")
-    val_y = st.number_input(label_y, min_value=0, max_value=1200, step=1, value=st.session_state[key_y], placeholder="Type Y...")
-    return val_x, val_y
+# Helper function to check if a value is a valid entered coordinate
+def is_valid(val):
+    return val is not None and val > 0
 
-# --- Dynamic Cascading Row Logic ---
-x_1, y_1 = spawn_input("Spawn 1 X", "Spawn 1 Y", "x_1", "y_1")
+# --- Dynamic Cascading Logic with Clean Value Verification ---
 
-if x_1 is not None and y_1 is not None: 
+# Spawn 1: Always Visible
+x_1 = st.number_input("Spawn 1 X", min_value=0, max_value=1200, step=1, value=st.session_state["x_1"], key="x_1", placeholder="Type X...")
+y_1 = st.number_input("Spawn 1 Y", min_value=0, max_value=1200, step=1, value=st.session_state["y_1"], key="y_1", placeholder="Type Y...")
+
+if is_valid(x_1) and is_valid(y_1):
     spawns.append((x_1, y_1))
     st.write("---")
-    x_2, y_2 = spawn_input("Spawn 2 X", "Spawn 2 Y", "x_2", "y_2")
     
-    if x_2 is not None and y_2 is not None:
+    # Spawn 2
+    x_2 = st.number_input("Spawn 2 X", min_value=0, max_value=1200, step=1, value=st.session_state["x_2"], key="x_2", placeholder="Type X...")
+    y_2 = st.number_input("Spawn 2 Y", min_value=0, max_value=1200, step=1, value=st.session_state["y_2"], key="y_2", placeholder="Type Y...")
+    
+    if is_valid(x_2) and is_valid(y_2):
         spawns.append((x_2, y_2))
         st.write("---")
-        x_3, y_3 = spawn_input("Spawn 3 X", "Spawn 3 Y", "x_3", "y_3")
         
-        if x_3 is not None and y_3 is not None:
+        # Spawn 3
+        x_3 = st.number_input("Spawn 3 X", min_value=0, max_value=1200, step=1, value=st.session_state["x_3"], key="x_3", placeholder="Type X...")
+        y_3 = st.number_input("Spawn 3 Y", min_value=0, max_value=1200, step=1, value=st.session_state["y_3"], key="y_3", placeholder="Type Y...")
+        
+        if is_valid(x_3) and is_valid(y_3):
             spawns.append((x_3, y_3))
             st.write("---")
-            x_4, y_4 = spawn_input("Spawn 4 X", "Spawn 4 Y", "x_4", "y_4")
             
-            if x_4 is not None and y_4 is not None:
+            # Spawn 4
+            x_4 = st.number_input("Spawn 4 X", min_value=0, max_value=1200, step=1, value=st.session_state["x_4"], key="x_4", placeholder="Type X...")
+            y_4 = st.number_input("Spawn 4 Y", min_value=0, max_value=1200, step=1, value=st.session_state["y_4"], key="y_4", placeholder="Type Y...")
+            
+            if is_valid(x_4) and is_valid(y_4):
                 spawns.append((x_4, y_4))
                 st.write("---")
-                x_5, y_5 = spawn_input("Spawn 5 X", "Spawn 5 Y", "x_5", "y_5")
                 
-                if x_5 is not None and y_5 is not None:
+                # Spawn 5
+                x_5 = st.number_input("Spawn 5 X", min_value=0, max_value=1200, step=1, value=st.session_state["x_5"], key="x_5", placeholder="Type X...")
+                y_5 = st.number_input("Spawn 5 Y", min_value=0, max_value=1200, step=1, value=st.session_state["y_5"], key="y_5", placeholder="Type Y...")
+                
+                if is_valid(x_5) and is_valid(y_5):
                     spawns.append((x_5, y_5))
 
 st.write("---")
