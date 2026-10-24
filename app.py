@@ -6,17 +6,35 @@ import altair as alt
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 
-# Visual Styling Anchors for High Contrast
+# 🥷 NATIVE VECTOR EMBED ENGINE: Injects a faded ninja profile across the absolute full-screen background canvas
 st.markdown("""
     <style>
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main, .stApp {
+        background-color: #0b0c10 !important;
+        background-image: 
+            linear-gradient(rgba(11, 12, 16, 0.88), rgba(11, 12, 16, 0.94)),
+            url("data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 100 100' opacity='0.08'><path fill='%23FFD700' d='M50,15c-4.4,0-8,3.6-8,8s3.6,8,8,8s8-3.6,8-8S54.4,15,50,15z M32,38c0,0,4-6,8-8h20c4,2,8,8,8,8l-4,18h-4l1-12l-5-2h-10l-5,2l1,12h-4L32,38z M35,60h30v4H35V60z M38,68h24v3H38V68z M43,76h14v2H43V76z'/></svg>") !important;
+        background-size: contain !important;
+        background-position: center 30% !important;
+        background-repeat: no-repeat !important;
+        background-attachment: fixed !important;
+    }
+    
+    /* Transparent layered component pass to let background silhouette shine through */
+    [data-testid="stAppViewContainer"] > section, [data-testid="stMainSpaceHolder"], .stAppViewBlockContainer {
+        background: transparent !important;
+    }
+    
+    /* Sleek inner form card container panel overlay */
     .block-container {
-        background: #111318 !important; 
+        background: rgba(17, 19, 24, 0.82) !important; 
         padding: 2rem 1.5rem !important;
         border-radius: 16px !important; 
         box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7) !important;
-        border: 1px solid rgba(255, 215, 0, 0.15) !important; 
+        border: 1px solid rgba(255, 215, 0, 0.12) !important; 
         margin-top: 1rem !important;
     }
+    
     p, span, label, .stSubheader {
         color: #e2e7f3 !important; 
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important; 
@@ -26,30 +44,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🏰 Premium Visual Title Block Header Card (Native Icons Layout Bypass)
-st.markdown(
-    """
-    <div style="
-        background: radial-gradient(circle, #1a1c24 0%, #0d0e12 100%);
-        padding: 2.5rem 1rem;
-        border-radius: 12px;
-        text-align: center;
-        border: 1px solid rgba(255, 215, 0, 0.2);
-        margin-bottom: 25px;
-        box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
-    ">
-        <div style="font-size: 75px; filter: drop-shadow(0 0 15px rgba(255,215,0,0.3)); margin-bottom: 10px;">🥷</div>
-        <div style="font-family: 'Arial Black', Gadget, sans-serif; font-size: 26px; font-weight: bold; color: #FFFFFF; letter-spacing: 1px;">NINJA CLAN INC.</div>
-        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #FFD700; font-weight: bold; letter-spacing: 2px; margin-top: 5px;">TACTICS SECTOR</div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
 st.title("🥷 Evony Spawn Generator")
 st.markdown("<div style='text-align: left; font-family: \"Arial Black\", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>", unsafe_allow_html=True)
 st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 175km away from rivals.")
 
+# Fixed True Hive Display Coordinates
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
