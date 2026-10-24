@@ -19,7 +19,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 200km away from rivals.")
-st.markdown("### 📋 Instructions:\n1. Do your first spawn from your spot in the hive and enter those coordinates below.\n2. Click **🥷 Calculate Next Target** to get a safe location to teleport to.\n3. Type the coordinates of your **next spawn** into the new box that appears.\n4. Keep repeating these steps until you are completely done spawning monsters!")
+st.markdown("### 📋 Instructions:\n1. Do your first spawn from your spot in the hive and enter those coordinates below.\n2. Click **🥷 Calculate next closest spawning location** to get a safe location to teleport to.\n3. Type the coordinates of your **next spawn** into the new box that appears.\n4. Keep repeating these steps until you are completely done spawning monsters!")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -72,7 +72,8 @@ if x_1 is not None and y_1 is not None:
 
 st.write("---")
 
-if st.button("🥷 Calculate Next Target", type="primary"):
+# Button label string updated successfully below
+if st.button("🥷 Calculate next closest spawning location", type="primary"):
     x_range = np.arange(0, 1200)
     y_range = np.arange(0, 1200)
     X, Y = np.meshgrid(x_range, y_range)
@@ -81,7 +82,7 @@ if st.button("🥷 Calculate Next Target", type="primary"):
     
     for sx, sy in spawns: valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 140)
     rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
-    for r in rivals: valid_mask &= (np.sqrt((X - r["X"])**2 + (Y - r["Y"])**2) > 200)
+    for r in rivals: valid_mask &= (np.sqrt((X - r["X"])**2 + (r["Y"] - Y)**2) > 200)
     
     valid_x, valid_y = X[valid_mask], Y[valid_mask]
     if len(valid_x) > 0:
@@ -90,7 +91,6 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
         
-        # Text updated successfully to requested phrasing
         st.success(f"🎯 **Port here and continue spawning:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{true_dist} km")
         
