@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import altair as alt
 
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
@@ -9,7 +10,6 @@ st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 st.markdown(
     """
     <style>
-    /* Injects an optimized dark high-contrast ninja image as a fixed frame background */
     .stApp {
         background-image: linear-gradient(rgba(13, 14, 18, 0.85), rgba(20, 22, 28, 0.9)), 
                           url("https://unsplash.com") !important;
@@ -17,8 +17,6 @@ st.markdown(
         background-position: center !important;
         background-attachment: fixed !important;
     }
-    
-    /* Transparent layered component sheets for high font readability */
     .block-container {
         background: rgba(13, 14, 18, 0.75);
         padding: 2rem 1.5rem !important;
@@ -27,14 +25,11 @@ st.markdown(
         border: 1px solid rgba(255, 255, 255, 0.08);
         margin-top: 1rem;
     }
-
-    /* Input title contrast stabilization adjustments */
     p, span, label, .stSubheader {
         color: #e2e7f3 !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         font-weight: 500;
     }
-    
     hr {
         border-color: rgba(255, 255, 255, 0.15) !important;
     }
@@ -79,41 +74,33 @@ if st.button("🔄 Clear All Fields", type="secondary"):
 
 st.subheader("📍 Active Spawns")
 
-# Set up defaults in session state if they don't exist
 for i in range(1, 6):
-    if f"x_{i}" not in st.session_state:
-        st.session_state[f"x_{i}"] = 0
-    if f"y_{i}" not in st.session_state:
-        st.session_state[f"y_{i}"] = 0
+    if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = 0
+    if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = 0
 
 spawns = []
 
-# --- Dynamic Cascading Row Logic ---
 x_1 = st.number_input("Spawn 1 X", min_value=0, max_value=1200, value=st.session_state["x_1"], key="x_1")
 y_1 = st.number_input("Spawn 1 Y", min_value=0, max_value=1200, value=st.session_state["y_1"], key="y_1")
 
 if x_1 > 0 and y_1 > 0: 
     spawns.append((x_1, y_1))
     st.write("---")
-    
     x_2 = st.number_input("Spawn 2 X", min_value=0, max_value=1200, value=st.session_state["x_2"], key="x_2")
     y_2 = st.number_input("Spawn 2 Y", min_value=0, max_value=1200, value=st.session_state["y_2"], key="y_2")
     if x_2 > 0 and y_2 > 0:
         spawns.append((x_2, y_2))
         st.write("---")
-        
         x_3 = st.number_input("Spawn 3 X", min_value=0, max_value=1200, value=st.session_state["x_3"], key="x_3")
         y_3 = st.number_input("Spawn 3 Y", min_value=0, max_value=1200, value=st.session_state["y_3"], key="y_3")
         if x_3 > 0 and y_3 > 0:
             spawns.append((x_3, y_3))
             st.write("---")
-            
             x_4 = st.number_input("Spawn 4 X", min_value=0, max_value=1200, value=st.session_state["x_4"], key="x_4")
             y_4 = st.number_input("Spawn 4 Y", min_value=0, max_value=1200, value=st.session_state["y_4"], key="y_4")
             if x_4 > 0 and y_4 > 0:
                 spawns.append((x_4, y_4))
                 st.write("---")
-                
                 x_5 = st.number_input("Spawn 5 X", min_value=0, max_value=1200, value=st.session_state["x_5"], key="x_5")
                 y_5 = st.number_input("Spawn 5 Y", min_value=0, max_value=1200, value=st.session_state["y_5"], key="y_5")
                 if x_5 > 0 and y_5 > 0:
@@ -149,31 +136,45 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{total_dist:.1f} km")
         
-        # 📊 Center-Optimized Data Assembly Block
-        map_points = [
-            {"X": HIVE_X, "Y": HIVE_Y, "Spot Type": "Hive Anchor (Gold)"},
-            {"X": target_x, "Y": target_y, "Spot Type": "Next Best Target (Green)"}
-        ]
-        
-        for idx, (sx, sy) in enumerate(spawns, 1):
-            map_points.append({"X": sx, "Y": sy, "Spot Type": f"Active Spawn {idx} (Red)"})
-            
-        # Injects 4 invisible border anchors to lock the 400x400 map dimensions centered around your hive
+        # Define exact map limits
         min_x, max_x = HIVE_X - 200, HIVE_X + 200
         min_y, max_y = HIVE_Y - 200, HIVE_Y + 200
+
+        # Data sets split out so we can render different shapes & hide grid pins completely
+        hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Label": "🏰 Alliance Hive", "Emoji": "🏰"}])
+        target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Label": "🎯 Next Target Target"}])
         
-        map_points.append({"X": min_x, "Y": min_y, "Spot Type": "Sector Grid Edge"})
-        map_points.append({"X": max_x, "Y": max_y, "Spot Type": "Sector Grid Edge"})
-        
-        df = pd.DataFrame(map_points)
-        
-        st.write("### 🗺️ Alliance Sector Map (400x400 Grid)")
-        st.scatter_chart(
-            data=df,
-            x="X",
-            y="Y",
-            color="Spot Type",
-            use_container_width=True
+        spawn_list = [{"X": sx, "Y": sy, "Label": f"Active Spawn {idx}"} for idx, (sx, sy) in enumerate(spawns, 1)]
+        spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Label"])
+
+        # Base Chart settings to handle exact 400x400 map scaling bounds
+        base_chart = alt.Chart().encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]))
         )
+
+        # 1. Renders the Hive Anchor specifically using the Castle Emoji shape
+        hive_layer = alt.Chart(hive_data).mark_text(size=35, dx=0, dy=0).encode(
+            x='X:Q', y='Y:Q', text='Emoji:N'
+        )
+
+        # 2. Renders the Target Spot as a large bright green ring
+        target_layer = alt.Chart(target_data).mark_point(
+            size=300, color='#00E676', filled=True, shape='circle'
+        ).encode(x='X:Q', y='Y:Q')
+
+        # 3. Renders the active monster spawns as red dots
+        spawn_layer = alt.Chart(spawn_data).mark_point(
+            size=150, color='#FF4B4B', filled=True
+        ).encode(x='X:Q', y='Y:Q')
+
+        # Combine all separate component layers cleanly onto one dashboard canvas
+        final_map = alt.layer(hive_layer, target_layer, spawn_layer, data=pd.concat([hive_data, target_data, spawn_data])).properties(
+            width=500, height=450
+        ).configure_view(strokeOpacity=0)
+
+        st.write("### 🗺️ Alliance Sector Map (400x400 Grid)")
+        st.altair_chart(final_map, use_container_width=True)
+
     else:
         st.error("No valid coordinates found in the search sector. Try clearing some old spawns!")
