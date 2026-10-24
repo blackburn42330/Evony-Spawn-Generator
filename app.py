@@ -140,36 +140,45 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         min_x, max_x = HIVE_X - 200, HIVE_X + 200
         min_y, max_y = HIVE_Y - 200, HIVE_Y + 200
 
-        # Dedicated, cleaned data structures
+        # Dedicated Dataframes
         hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Emoji": "🏰"}])
-        target_data = pd.DataFrame([{"X": target_x, "Y": target_y}])
+        target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
         
-        spawn_list = [{"X": sx, "Y": sy} for sx, sy in spawns]
-        spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y"])
+        spawn_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
+        spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
 
-        # Forced Scale Mapping: locks bounds tightly to keep Hive centered
+        # Layer 1: Renders the Hive Anchor (🏰)
         hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(
             x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
             y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y])),
             text='Emoji:N'
         )
 
-        target_layer = alt.Chart(target_data).mark_point(
-            size=300, color='#00E676', filled=True, shape='circle'
-        ).encode(
+        # Layer 2: Renders the Target Destination (🎯)
+        target_layer = alt.Chart(target_data).mark_text(size=35).encode(
             x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]))
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y])),
+            text='Emoji:N'
         )
 
-        spawn_layer = alt.Chart(spawn_data).mark_point(
-            size=150, color='#FF4B4B', filled=True
-        ).encode(
+        # Layer 3: Renders the Monster Icons (👹)
+        monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
             x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]))
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y])),
+            text='Emoji:N'
         )
 
-        # Assemble and drop the outer canvas frame margins
-        final_map = alt.layer(hive_layer, target_layer, spawn_layer).properties(
+        # Layer 4: Renders the Spawn Identification Numbers right next to the monster emoji
+        number_layer = alt.Chart(spawn_data).mark_text(
+            size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
+        ).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y])),
+            text='Num:N'
+        )
+
+        # Merge all separate visualization modules onto a single 400x400 map element
+        final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
 
