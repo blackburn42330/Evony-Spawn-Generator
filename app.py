@@ -3,47 +3,8 @@ import numpy as np
 import pandas as pd
 import altair as alt
 
-# Mobile optimization layout
+# Set mobile layout constraints
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
-
-# 🥷 NATIVE BASE64 SILHOUETTE ENGINE: Embeds a faded full-body ninja profile completely into the master full-screen page background
-st.markdown("""
-    <style>
-    /* Absolute target to inject the text-encoded graphic into Streamlit's base webpage viewport */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main, .stApp {
-        background-color: #0b0c10 !important;
-        background-image: linear-gradient(rgba(11, 12, 16, 0.88), rgba(11, 12, 16, 0.94)), 
-                          url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBmaWxsPSIjRkZEMzAwIiBvcGFjaXR5PSIwLjA1IiBkPSJNNTAsMTVDNDUuNiwxNSw0MiwxOC42LDQyLDIzczMuNiw4LDgsOHM4LTMuNiw4LThTNTQuNCwxNSw1MCwxNXogTTMyLDM4YzAsMCw0LTYsOC04aDIwYzQsMiw4LDgsOCw4bC00LDE4aC00bDEtMTJsLTUtMmgtMTBsLTUsMmwxLDEyaC00TDMyLDM4eiBNMzUsNjBoMzB2NEgzNVY2MHogTTM4LDY4aDI0djNIMzhWNjh6IE00Myw3NmgxNHYyaC0xNFY3NnoiLz48L3N2Zz4=") !important;
-        background-size: 340px !important;
-        background-position: center 25% !important;
-        background-repeat: no-repeat !important;
-        background-attachment: fixed !important;
-    }
-    
-    /* Dissolve layout blockers to allow the background character to pass through behind everything */
-    [data-testid="stAppViewContainer"] > section, [data-testid="stMainSpaceHolder"], .stAppViewBlockContainer, [data-testid="stVerticalBlock"] {
-        background: transparent !important;
-        background-color: transparent !important;
-    }
-    
-    /* Premium card panel container overlay so text fields stay super sharp on your screen */
-    .block-container {
-        background: rgba(17, 19, 24, 0.83) !important; 
-        padding: 2rem 1.5rem !important;
-        border-radius: 16px !important; 
-        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7) !important;
-        border: 1px solid rgba(255, 215, 0, 0.12) !important; 
-        margin-top: 1rem !important;
-    }
-    
-    p, span, label, .stSubheader {
-        color: #e2e7f3 !important; 
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important; 
-        font-weight: 500 !important;
-    }
-    hr { border-color: rgba(255, 215, 0, 0.15) !important; }
-    </style>
-""", unsafe_allow_html=True)
 
 st.title("🥷 Evony Spawn Generator")
 
@@ -68,53 +29,63 @@ st.markdown(
 
 st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 175km away from rivals.")
 
-# Fixed True Hive Display Coordinates
+# Locked-in True Alliance Home Base
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
+# Clear All Fields Mechanism
 if st.button("🔄 Clear All Fields", type="secondary"):
     for i in range(1, 6):
         st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
     st.rerun()
 
 st.subheader("📍 Active Spawns")
+
+# Ensure clean string values stand in memory defaults
 for i in range(1, 6):
     if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
     if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
 
 spawns = []
+
 def get_coord(val_string):
     try:
         val = int(val_string.strip())
-        if 0 <= val <= 1200: return val
-    except ValueError: pass
+        if 0 <= val <= 1200:
+            return val
+    except ValueError:
+        pass
     return None
 
-# Cascading Text Inputs Loop
+# --- Dynamic Cascading Entry Logic ---
 x_in_1 = st.text_input("Spawn 1 X", value=st.session_state["x_1"], key="x_1", placeholder="Type X...")
 y_in_1 = st.text_input("Spawn 1 Y", value=st.session_state["y_1"], key="y_1", placeholder="Type Y...")
 x_1, y_1 = get_coord(x_in_1), get_coord(y_in_1)
 
 if x_1 is not None and y_1 is not None:
-    spawns.append((x_1, y_1)); st.write("---")
+    spawns.append((x_1, y_1))
+    st.write("---")
     x_in_2 = st.text_input("Spawn 2 X", value=st.session_state["x_2"], key="x_2", placeholder="Type X...")
     y_in_2 = st.text_input("Spawn 2 Y", value=st.session_state["y_2"], key="y_2", placeholder="Type Y...")
     x_2, y_2 = get_coord(x_in_2), get_coord(y_in_2)
     
     if x_2 is not None and y_2 is not None:
-        spawns.append((x_2, y_2)); st.write("---")
+        spawns.append((x_2, y_2))
+        st.write("---")
         x_in_3 = st.text_input("Spawn 3 X", value=st.session_state["x_3"], key="x_3", placeholder="Type X...")
         y_in_3 = st.text_input("Spawn 3 Y", value=st.session_state["y_3"], key="y_3", placeholder="Type Y...")
         x_3, y_3 = get_coord(x_in_3), get_coord(y_in_3)
         
         if x_3 is not None and y_3 is not None:
-            spawns.append((x_3, y_3)); st.write("---")
+            spawns.append((x_3, y_3))
+            st.write("---")
             x_in_4 = st.text_input("Spawn 4 X", value=st.session_state["x_4"], key="x_4", placeholder="Type X...")
             y_in_4 = st.text_input("Spawn 4 Y", value=st.session_state["y_4"], key="y_4", placeholder="Type Y...")
             x_4, y_4 = get_coord(x_in_4), get_coord(y_in_4)
             
             if x_4 is not None and y_4 is not None:
-                spawns.append((x_4, y_4)); st.write("---")
+                spawns.append((x_4, y_4))
+                st.write("---")
                 x_in_5 = st.text_input("Spawn 5 X", value=st.session_state["x_5"], key="x_5", placeholder="Type X...")
                 y_in_5 = st.text_input("Spawn 5 Y", value=st.session_state["y_5"], key="y_5", placeholder="Type Y...")
                 x_5, y_5 = get_coord(x_in_5), get_coord(y_in_5)
@@ -122,6 +93,7 @@ if x_1 is not None and y_1 is not None:
 
 st.write("---")
 
+# Tactical Scanning Algorithm
 if st.button("🥷 Calculate Next Target", type="primary"):
     x_range = np.arange(max(0, HIVE_X - 200), min(1200, HIVE_X + 200))
     y_range = np.arange(max(0, HIVE_Y - 200), min(1200, HIVE_Y + 200))
@@ -129,9 +101,11 @@ if st.button("🥷 Calculate Next Target", type="primary"):
     X, Y = X.flatten(), Y.flatten()
     valid_mask = np.ones_like(X, dtype=bool)
     
+    # Exclusion 1: 140km active spawn buffer zone
     for sx, sy in spawns:
         valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 140)
         
+    # Exclusion 2: 175km absolute ban from enemy alliances
     rivals = [(320, 483), (611, 551), (672, 771)]
     for rx, ry in rivals:
         valid_mask &= (np.sqrt((X - rx)**2 + (Y - ry)**2) > 175)
@@ -147,6 +121,7 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{true_dist} km")
         
+        # Fixed 400x400 map dimension bounds config markers
         min_x, max_x = HIVE_X - 200, HIVE_X + 200
         min_y, max_y = HIVE_Y - 200, HIVE_Y + 200
         x_ticks, y_ticks = list(range(min_x, max_x + 1, 20)), list(range(min_y, max_y + 1, 20))
