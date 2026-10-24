@@ -68,42 +68,49 @@ st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 # Reset Functionality
 if st.button("🔄 Clear All Fields", type="secondary"):
     for i in range(1, 6):
-        st.session_state[f"x_{i}"] = 0
-        st.session_state[f"y_{i}"] = 0
+        st.session_state[f"x_{i}"] = None
+        st.session_state[f"y_{i}"] = None
     st.rerun()
 
 st.subheader("📍 Active Spawns")
 
+# Set up defaults as None (completely blank) in session state if they don't exist
 for i in range(1, 6):
-    if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = 0
-    if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = 0
+    if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = None
+    if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = None
 
 spawns = []
 
-x_1 = st.number_input("Spawn 1 X", min_value=0, max_value=1200, value=st.session_state["x_1"], key="x_1")
-y_1 = st.number_input("Spawn 1 Y", min_value=0, max_value=1200, value=st.session_state["y_1"], key="y_1")
+# Helper function to generate clean numeric input fields without default zeros
+def spawn_input(label_x, label_y, key_x, key_y):
+    val_x = st.number_input(label_x, min_value=0, max_value=1200, step=1, value=st.session_state[key_x], placeholder="Type X...")
+    val_y = st.number_input(label_y, min_value=0, max_value=1200, step=1, value=st.session_state[key_y], placeholder="Type Y...")
+    return val_x, val_y
 
-if x_1 > 0 and y_1 > 0: 
+# --- Dynamic Cascading Row Logic ---
+x_1, y_1 = spawn_input("Spawn 1 X", "Spawn 1 Y", "x_1", "y_1")
+
+if x_1 is not None and y_1 is not None: 
     spawns.append((x_1, y_1))
     st.write("---")
-    x_2 = st.number_input("Spawn 2 X", min_value=0, max_value=1200, value=st.session_state["x_2"], key="x_2")
-    y_2 = st.number_input("Spawn 2 Y", min_value=0, max_value=1200, value=st.session_state["y_2"], key="y_2")
-    if x_2 > 0 and y_2 > 0:
+    x_2, y_2 = spawn_input("Spawn 2 X", "Spawn 2 Y", "x_2", "y_2")
+    
+    if x_2 is not None and y_2 is not None:
         spawns.append((x_2, y_2))
         st.write("---")
-        x_3 = st.number_input("Spawn 3 X", min_value=0, max_value=1200, value=st.session_state["x_3"], key="x_3")
-        y_3 = st.number_input("Spawn 3 Y", min_value=0, max_value=1200, value=st.session_state["y_3"], key="y_3")
-        if x_3 > 0 and y_3 > 0:
+        x_3, y_3 = spawn_input("Spawn 3 X", "Spawn 3 Y", "x_3", "y_3")
+        
+        if x_3 is not None and y_3 is not None:
             spawns.append((x_3, y_3))
             st.write("---")
-            x_4 = st.number_input("Spawn 4 X", min_value=0, max_value=1200, value=st.session_state["x_4"], key="x_4")
-            y_4 = st.number_input("Spawn 4 Y", min_value=0, max_value=1200, value=st.session_state["y_4"], key="y_4")
-            if x_4 > 0 and y_4 > 0:
+            x_4, y_4 = spawn_input("Spawn 4 X", "Spawn 4 Y", "x_4", "y_4")
+            
+            if x_4 is not None and y_4 is not None:
                 spawns.append((x_4, y_4))
                 st.write("---")
-                x_5 = st.number_input("Spawn 5 X", min_value=0, max_value=1200, value=st.session_state["x_5"], key="x_5")
-                y_5 = st.number_input("Spawn 5 Y", min_value=0, max_value=1200, value=st.session_state["y_5"], key="y_5")
-                if x_5 > 0 and y_5 > 0:
+                x_5, y_5 = spawn_input("Spawn 5 X", "Spawn 5 Y", "x_5", "y_5")
+                
+                if x_5 is not None and y_5 is not None:
                     spawns.append((x_5, y_5))
 
 st.write("---")
@@ -168,7 +175,7 @@ if st.button("🥷 Calculate Next Target", type="primary"):
             text='Emoji:N'
         )
 
-        # Layer 4: Renders the Spawn Identification Numbers right next to the monster emoji
+        # Layer 4: Renders the Spawn Identification Numbers
         number_layer = alt.Chart(spawn_data).mark_text(
             size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
         ).encode(
@@ -177,7 +184,7 @@ if st.button("🥷 Calculate Next Target", type="primary"):
             text='Num:N'
         )
 
-        # Merge all separate visualization modules onto a single 400x400 map element
+        # Merge layers onto 400x400 canvas
         final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
