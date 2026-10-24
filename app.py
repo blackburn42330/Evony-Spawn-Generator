@@ -29,11 +29,11 @@ st.markdown(
 
 st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 200km away from rivals.")
 
-# 📖 Easy-to-Follow Alliance Instructions Block
+# 📖 Alliance Instructions Block
 st.markdown(
     """
     ### 📋 Instructions:
-    1. Enter the coordinates of your **first spawn** below.
+    1. Do your first spawn from your spot in the hive and enter those coordinates below.
     2. Click **🥷 Calculate Next Target** to get a safe location to teleport to.
     3. Type the coordinates of your **next spawn** into the new box that appears.
     4. Keep repeating these steps until you are completely done spawning monsters!
@@ -44,8 +44,8 @@ st.markdown(
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
-# Clear All Fields Mechanism
-if st.button("🔄 Clear All Fields", type="secondary"):
+# 🗑️ Prominent Trash Can Reset Button Layer
+if st.button("🗑️ Clear All Fields", type="primary"):
     for i in range(1, 6):
         st.session_state[f"x_{i}"] = ""
         st.session_state[f"y_{i}"] = ""
