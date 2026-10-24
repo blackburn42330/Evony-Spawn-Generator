@@ -44,8 +44,8 @@ st.markdown(
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
-# 🗑️ Prominent Trash Can Reset Button Layer
-if st.button("🗑️ Clear All Fields", type="primary"):
+# 🗑️ High-Contrast Secondary Trash Can Reset Button Layer (Fixes Readability)
+if st.button("🗑️ Clear All Fields", type="secondary"):
     for i in range(1, 6):
         st.session_state[f"x_{i}"] = ""
         st.session_state[f"y_{i}"] = ""
