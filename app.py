@@ -59,13 +59,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.write("Finds the closest available coordinate to the hive outside a 140km radius of your current spawns.")
+st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 175km away from rivals.")
 
-# --- TACTICAL COORDINATE SEPARATION ---
-TRUE_HIVE_X, TRUE_HIVE_Y = 356, 721  # This is what displays visually
-MATH_HIVE_X, MATH_HIVE_Y = 350, 745  # This handles the proximity calculation
-
-st.info(f"🏰 **Main Alliance Hive:** ({TRUE_HIVE_X}, {TRUE_HIVE_Y})")
+# True Hive Coordinates Activated
+HIVE_X, HIVE_Y = 356, 721
+st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
 # Reset Functionality
 if st.button("🔄 Clear All Fields", type="secondary"):
@@ -136,79 +134,78 @@ st.write("---")
 
 # Calculation Logic
 if st.button("🥷 Calculate Next Target", type="primary"):
-    x_range = np.arange(max(0, MATH_HIVE_X - 200), min(1200, MATH_HIVE_X + 200))
-    y_range = np.arange(max(0, MATH_HIVE_Y - 200), min(1200, MATH_HIVE_Y + 200))
+    # Generate broad map search sector around the true hive coordinates (400x400 area)
+    x_range = np.arange(max(0, HIVE_X - 200), min(1200, HIVE_X + 200))
+    y_range = np.arange(max(0, HIVE_Y - 200), min(1200, HIVE_Y + 200))
     
     X, Y = np.meshgrid(x_range, y_range)
     X = X.flatten()
     Y = Y.flatten()
     
     valid_mask = np.ones_like(X, dtype=bool)
+    
+    # 1. Enforce 140km exclusion check for your active monster spawns
     for sx, sy in spawns:
         dist_to_spawn = np.sqrt((X - sx)**2 + (Y - sy)**2)
         valid_mask &= (dist_to_spawn > 140)
+        
+    # 2. Enforce 175km safety protection buffer from rival alliances
+    rivals = [(320, 483), (611, 551), (672, 771)]
+    for rx, ry in rivals:
+        dist_to_rival = np.sqrt((X - rx)**2 + (Y - ry)**2)
+        valid_mask &= (dist_to_rival > 175)
         
     valid_x = X[valid_mask]
     valid_y = Y[valid_mask]
     
     if len(valid_x) > 0:
-        dist_to_hive = np.sqrt((valid_x - MATH_HIVE_X)**2 + (valid_y - MATH_HIVE_Y)**2)
+        # Measures proximity directly to your TRUE hive coordinates
+        dist_to_hive = np.sqrt((valid_x - HIVE_X)**2 + (valid_y - HIVE_Y)**2)
         closest_idx = np.argmin(dist_to_hive)
         
         target_x = int(valid_x[closest_idx])
         target_y = int(valid_y[closest_idx])
-        
-        # Measures exact whole distance from the true home castle base
-        true_dist = int(round(np.sqrt((target_x - TRUE_HIVE_X)**2 + (target_y - TRUE_HIVE_Y)**2)))
+        true_dist = int(round(dist_to_hive[closest_idx]))
         
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{true_dist} km")
         
-        # Explicit 400x400 map scaling grid boundary parameters centered on calculation spot
-        min_x, max_x = MATH_HIVE_X - 200, MATH_HIVE_X + 200
-        min_y, max_y = MATH_HIVE_Y - 200, MATH_HIVE_Y + 200
+        # Explicit 400x400 map scaling grid boundary parameters centered on your true hive
+        min_x, max_x = HIVE_X - 200, HIVE_X + 200
+        min_y, max_y = HIVE_Y - 200, HIVE_Y + 200
 
-        # Numerical step configurations
         x_ticks = list(range(min_x, max_x + 1, 20))
         y_ticks = list(range(min_y, max_y + 1, 20))
 
         x_axis_config = alt.Axis(values=x_ticks, format='d', grid=True)
         y_axis_config = alt.Axis(values=y_ticks, format='d', grid=True)
 
-        # Separate independent Dataframes
-        hive_data = pd.DataFrame([{"X": TRUE_HIVE_X, "Y": TRUE_HIVE_Y, "Emoji": "🏰"}])
+        base_chart = alt.Chart().encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config)
+        )
+
+        hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Emoji": "🏰"}])
         target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
         spawn_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
+        
+        # Include rival alliance hubs on the visual minimap as caution skulls (💀) if they are in the viewing window
+        for rx, ry in rivals:
+            if min_x <= rx <= max_x and min_y <= ry <= max_y:
+                spawn_list.append({"X": rx, "Y": ry, "Emoji": "💀", "Num": "RIVAL"})
+                
         spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
 
-        # Create isolated mapping components explicitly referencing data constraints up front
-        hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
-            text='Emoji:N'
-        )
-
-        target_layer = alt.Chart(target_data).mark_text(size=35).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
-            text='Emoji:N'
-        )
-
-        monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
-            text='Emoji:N'
-        )
+        hive_layer = base_chart.mark_text(size=35).encode(text='Emoji:N').data(hive_data)
+        target_layer = base_chart.mark_text(size=35).encode(text='Emoji:N').data(target_data)
         
-        number_layer = alt.Chart(spawn_data).mark_text(
+        # Filters standard monster spawns from rival indicator targets
+        monster_layer = base_chart.mark_text(size=28).encode(text='Emoji:N').data(spawn_data)
+        
+        number_layer = base_chart.mark_text(
             size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
-        ).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
-            text='Num:N'
-        )
+        ).encode(text='Num:N').data(spawn_data[spawn_data['Num'] != 'RIVAL'])
 
-        # Merge onto the final radar chart dashboard container panel
         final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
@@ -217,4 +214,4 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.altair_chart(final_map, use_container_width=True)
 
     else:
-        st.error("No valid coordinates found in the search sector. Try clearing some old spawns!")
+        st.error("No valid coordinates found in the search sector. Try clearing some old spawns or moving further out!")
