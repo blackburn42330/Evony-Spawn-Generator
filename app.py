@@ -105,7 +105,7 @@ if st.button("🥷 Calculate Next Target", type="primary"):
     for sx, sy in spawns:
         valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 140)
         
-    # Exclusion 2: 200km absolute ban from enemy alliances (Updated)
+    # Exclusion 2: 200km absolute ban from enemy alliances
     rivals = [(320, 483), (611, 551), (672, 771)]
     for rx, ry in rivals:
         valid_mask &= (np.sqrt((X - rx)**2 + (Y - ry)**2) > 200)
@@ -121,34 +121,42 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{true_dist} km")
         
-        # Fixed 400x400 map dimension bounds config markers
+        # 400x400 map dimension bounds configuration markers
         min_x, max_x = HIVE_X - 200, HIVE_X + 200
         min_y, max_y = HIVE_Y - 200, HIVE_Y + 200
-        x_ticks, y_ticks = list(range(min_x, max_x + 1, 20)), list(range(min_y, max_y + 1, 20))
-        x_axis_config, y_axis_config = alt.Axis(values=x_ticks, format='d', grid=True), alt.Axis(values=y_ticks, format='d', grid=True)
 
-        hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Emoji": "🏰"}])
-        target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
-        monster_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
+        # Calculate isometric Visual parameters to stretch and rotate diamond boundaries securely
+        min_x_iso = min_x - max_y
+        max_x_iso = max_x - min_y
+        min_y_iso = min_x + min_y
+        max_y_iso = max_x + max_y
+
+        # Data sets mapped directly to the math transformation matrix (X-Y and X+Y)
+        hive_data = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
+        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
+        
+        monster_list = [{"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "Num": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"} for idx, (sx, sy) in enumerate(spawns, 1)]
         for rx, ry in rivals:
-            if min_x <= rx <= max_x and min_y <= ry <= max_y: monster_list.append({"X": rx, "Y": ry, "Emoji": "💀", "Num": "R"})
-        spawn_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
+            if min_x <= rx <= max_x and min_y <= ry <= max_y:
+                monster_list.append({"X_iso": rx - ry, "Y_iso": rx + ry, "Emoji": "💀", "Num": "R", "Label": f"Rival Alliances ({rx},{ry})"})
+        spawn_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Num", "Label"])
 
+        # Isometric Scales: reverse=True on the vertical scale ensures (0,0) sits at the top point
+        x_scale = alt.Scale(domain=[min_x_iso, max_x_iso])
+        y_scale = alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
+
+        # Plot components using the layout matrix. Includes clean hover overlays for easy coordinate crosschecking.
         hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config), text='Emoji:N'
+            x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
         )
         target_layer = alt.Chart(target_data).mark_text(size=35).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config), text='Emoji:N'
+            x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
         )
         monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config), text='Emoji:N'
+            x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
         )
         number_layer = alt.Chart(spawn_data[spawn_data['Num'] != 'R']).mark_text(size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config), text='Num:N'
+            x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Num:N'
         )
 
         final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(width=500, height=450).configure_view(strokeOpacity=0)
