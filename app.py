@@ -6,33 +6,59 @@ import altair as alt
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 
-# 🥷 NATIVE VECTOR EMBED ENGINE: Injects a faded ninja profile across the absolute full-screen background canvas
+# 🥷 NATIVE GEOMETRIC VECTOR OVERRIDE: Traces a giant, faded ninja profile out of background math vectors
 st.markdown("""
     <style>
+    /* Absolute viewport canvas settings */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main, .stApp {
         background-color: #0b0c10 !important;
-        background-image: 
-            linear-gradient(rgba(11, 12, 16, 0.88), rgba(11, 12, 16, 0.94)),
-            url("data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 100 100' opacity='0.08'><path fill='%23FFD700' d='M50,15c-4.4,0-8,3.6-8,8s3.6,8,8,8s8-3.6,8-8S54.4,15,50,15z M32,38c0,0,4-6,8-8h20c4,2,8,8,8,8l-4,18h-4l1-12l-5-2h-10l-5,2l1,12h-4L32,38z M35,60h30v4H35V60z M38,68h24v3H38V68z M43,76h14v2H43V76z'/></svg>") !important;
-        background-size: contain !important;
-        background-position: center 30% !important;
-        background-repeat: no-repeat !important;
-        background-attachment: fixed !important;
+        position: relative !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-x: hidden !important;
     }
     
-    /* Transparent layered component pass to let background silhouette shine through */
-    [data-testid="stAppViewContainer"] > section, [data-testid="stMainSpaceHolder"], .stAppViewBlockContainer {
+    /* Injects a massive, faded native polygon shape acting as a silhouette backdrop layer */
+    [data-testid="stAppViewContainer"]::before {
+        content: "" !important;
+        position: fixed !important;
+        top: 20% !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 320px !important;
+        height: 320px !important;
+        background: #ffd700 !important;
+        opacity: 0.04 !important;
+        z-index: 0 !important;
+        pointer-events: none !important;
+        /* Mathematical polygon path tracing out a classic ninja mask silhouette */
+        clip-path: polygon(
+            50% 0%, 75% 15%, 85% 40%, 80% 65%, 65% 85%, 50% 100%, 35% 85%, 20% 65%, 15% 40%, 25% 15%,
+            /* Cutout layers for the headband and eyes mask slits */
+            50% 0%, 25% 15%, 30% 35%, 70% 35%, 75% 15%, 50% 0%,
+            40% 45%, 45% 50%, 40% 55%, 35% 50%, 40% 45%,
+            60% 45%, 65% 50%, 60% 55%, 55% 50%, 60% 45%
+        ) !important;
+    }
+    
+    /* Dissolve all intervening system blocking containers completely */
+    [data-testid="stAppViewContainer"] > section, [data-testid="stMainSpaceHolder"], .stAppViewBlockContainer, [data-testid="stVerticalBlock"] {
         background: transparent !important;
+        background-color: transparent !important;
     }
     
-    /* Sleek inner form card container panel overlay */
+    /* Sleek, semi-transparent card container so text elements are hyper-clear */
     .block-container {
-        background: rgba(17, 19, 24, 0.82) !important; 
+        background: rgba(17, 19, 24, 0.85) !important; 
         padding: 2rem 1.5rem !important;
         border-radius: 16px !important; 
         box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7) !important;
         border: 1px solid rgba(255, 215, 0, 0.12) !important; 
         margin-top: 1rem !important;
+        position: relative !important;
+        z-index: 1 !important;
     }
     
     p, span, label, .stSubheader {
