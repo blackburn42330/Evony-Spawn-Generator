@@ -74,13 +74,14 @@ if st.button("🔄 Clear All Fields", type="secondary"):
 
 st.subheader("📍 Active Spawns")
 
-# Set up defaults as empty strings
+# Set up defaults as empty strings (completely blank text boxes)
 for i in range(1, 6):
     if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
     if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
 
 spawns = []
 
+# Helper function to validate and convert text inputs to real numbers safely
 def get_coord(val_string):
     try:
         val = int(val_string.strip())
@@ -91,6 +92,8 @@ def get_coord(val_string):
     return None
 
 # --- Dynamic Cascading Logic with Clean Text Inputs ---
+
+# Spawn 1: Always Visible
 x_in_1 = st.text_input("Spawn 1 X", value=st.session_state["x_1"], key="x_1", placeholder="Type X coordinate...")
 y_in_1 = st.text_input("Spawn 1 Y", value=st.session_state["y_1"], key="y_1", placeholder="Type Y coordinate...")
 x_1, y_1 = get_coord(x_in_1), get_coord(y_in_1)
@@ -98,29 +101,37 @@ x_1, y_1 = get_coord(x_in_1), get_coord(y_in_1)
 if x_1 is not None and y_1 is not None:
     spawns.append((x_1, y_1))
     st.write("---")
-    x_2 = st.text_input("Spawn 2 X", value=st.session_state["x_2"], key="x_2", placeholder="Type X coordinate...")
-    y_2 = st.text_input("Spawn 2 Y", value=st.session_state["y_2"], key="y_2", placeholder="Type Y coordinate...")
+    
+    # Spawn 2
+    x_in_2 = st.text_input("Spawn 2 X", value=st.session_state["x_2"], key="x_2", placeholder="Type X coordinate...")
+    y_in_2 = st.text_input("Spawn 2 Y", value=st.session_state["y_2"], key="y_2", placeholder="Type Y coordinate...")
     x_2, y_2 = get_coord(x_in_2), get_coord(y_in_2)
     
     if x_2 is not None and y_2 is not None:
         spawns.append((x_2, y_2))
         st.write("---")
-        x_3 = st.text_input("Spawn 3 X", value=st.session_state["x_3"], key="x_3", placeholder="Type X coordinate...")
-        y_3 = st.text_input("Spawn 3 Y", value=st.session_state["y_3"], key="y_3", placeholder="Type Y coordinate...")
+        
+        # Spawn 3
+        x_in_3 = st.text_input("Spawn 3 X", value=st.session_state["x_3"], key="x_3", placeholder="Type X coordinate...")
+        y_in_3 = st.text_input("Spawn 3 Y", value=st.session_state["y_3"], key="y_3", placeholder="Type Y coordinate...")
         x_3, y_3 = get_coord(x_in_3), get_coord(y_in_3)
         
         if x_3 is not None and y_3 is not None:
             spawns.append((x_3, y_3))
             st.write("---")
-            x_4 = st.text_input("Spawn 4 X", value=st.session_state["x_4"], key="x_4", placeholder="Type X coordinate...")
-            y_4 = st.text_input("Spawn 4 Y", value=st.session_state["y_4"], key="y_4", placeholder="Type Y coordinate...")
+            
+            # Spawn 4
+            x_in_4 = st.text_input("Spawn 4 X", value=st.session_state["x_4"], key="x_4", placeholder="Type X coordinate...")
+            y_in_4 = st.text_input("Spawn 4 Y", value=st.session_state["y_4"], key="y_4", placeholder="Type Y coordinate...")
             x_4, y_4 = get_coord(x_in_4), get_coord(y_in_4)
             
             if x_4 is not None and y_4 is not None:
                 spawns.append((x_4, y_4))
                 st.write("---")
-                x_5 = st.text_input("Spawn 5 X", value=st.session_state["x_5"], key="x_5", placeholder="Type X coordinate...")
-                y_5 = st.text_input("Spawn 5 Y", value=st.session_state["y_5"], key="y_5", placeholder="Type Y coordinate...")
+                
+                # Spawn 5
+                x_in_5 = st.text_input("Spawn 5 X", value=st.session_state["x_5"], key="x_5", placeholder="Type X coordinate...")
+                y_in_5 = st.text_input("Spawn 5 Y", value=st.session_state["y_5"], key="y_5", placeholder="Type Y coordinate...")
                 x_5, y_5 = get_coord(x_in_5), get_coord(y_in_5)
                 
                 if x_5 is not None and y_5 is not None:
@@ -156,61 +167,57 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{total_dist:.1f} km")
         
-        # 400x400 calculation space definitions
+        # Explicit 400x400 map scaling grid boundary parameters
         min_x, max_x = HIVE_X - 200, HIVE_X + 200
         min_y, max_y = HIVE_Y - 200, HIVE_Y + 200
 
-        # Calculate isometric visual bounding metrics to preserve centering
-        min_x_iso = min_x - max_y
-        max_x_iso = max_x - min_y
-        min_y_iso = min_x + min_y
-        max_y_iso = max_x + max_y
+        # Create numerical arrays for explicit axis line positioning
+        x_ticks = list(range(min_x, max_x + 1, 20))
+        y_ticks = list(range(min_y, max_y + 1, 20))
 
-        # Data assembly with true values saved for on-tap labels
-        hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Info": f"Hive ({HIVE_X},{HIVE_Y})"}])
-        target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Info": f"Target ({target_x},{target_y})"}])
+        # Dedicated Dataframes
+        hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Emoji": "🏰"}])
+        target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
         
-        spawn_list = []
-        for idx, (sx, sy) in enumerate(spawns, 1):
-            spawn_list.append({
-                "X": sx, "Y": sy, 
-                "X_iso": sx - sy, "Y_iso": sx + sy, 
-                "Emoji": "👹", "Num": str(idx),
-                "Info": f"Spawn {idx} ({sx},{sy})"
-            })
-        spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "X_iso", "Y_iso", "Emoji", "Num", "Info"])
+        spawn_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
+        spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
 
-        # Isometric Grid Setup (reverse=True forces lower X+Y positions to render down)
-        x_scale = alt.Scale(domain=[min_x_iso, max_x_iso])
-        y_scale = alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
+        # Forced Grid Scale Layout: explicitly pass hardcoded coordinate arrays
+        x_axis_config = alt.Axis(values=x_ticks, format='d', grid=True)
+        y_axis_config = alt.Axis(values=y_ticks, format='d', grid=True)
 
         hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(
-            x=alt.X('X_iso:Q', scale=x_scale, axis=None),
-            y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
-            text='Emoji:N', tooltip=['Info:N']
-        )
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]))
+        ).transform_calculate(text="datum.Emoji")
+
+        # Fix: explicitly define text mapping step for custom chart visuals
+        hive_text = hive_layer.mark_text(size=35).encode(text='text:N')
 
         target_layer = alt.Chart(target_data).mark_text(size=35).encode(
-            x=alt.X('X_iso:Q', scale=x_scale, axis=None),
-            y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
-            text='Emoji:N', tooltip=['Info:N']
-        )
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]))
+        ).transform_calculate(text="datum.Emoji")
+        
+        target_text = target_layer.mark_text(size=35).encode(text='text:N')
 
         monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
-            x=alt.X('X_iso:Q', scale=x_scale, axis=None),
-            y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
-            text='Emoji:N', tooltip=['Info:N']
-        )
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config)
+        ).transform_calculate(text="datum.Emoji")
+        
+        monster_text = monster_layer.mark_text(size=28).encode(text='text:N')
 
         number_layer = alt.Chart(spawn_data).mark_text(
             size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
         ).encode(
-            x=alt.X('X_iso:Q', scale=x_scale, axis=None),
-            y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y])),
             text='Num:N'
         )
 
-        final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(
+        # Merge layers onto the final map frame
+        final_map = alt.layer(hive_text, target_text, monster_text, number_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
 
