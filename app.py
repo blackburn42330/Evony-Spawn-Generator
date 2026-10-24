@@ -4,42 +4,41 @@ import numpy as np
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 
-# Custom Full-Screen Fixed Background Style Block
+# Bulletproof Full-Screen Global Styling Layer
 st.markdown(
     """
     <style>
-    /* Absolute target to apply image to the structural viewport wrapper */
-    html, body, [data-testid="stAppViewContainer"] {
-        background-image: linear-gradient(rgba(13, 14, 18, 0.88), rgba(20, 22, 28, 0.93)), 
+    /* 1. Force the absolute bottom layer to contain the master ninja graphic */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main, .stApp {
+        background-image: linear-gradient(rgba(10, 11, 15, 0.88), rgba(15, 16, 22, 0.94)), 
                           url("https://freepik.com") !important;
         background-size: cover !important;
         background-position: center center !important;
         background-repeat: no-repeat !important;
         background-attachment: fixed !important;
-        height: 100vh;
-        width: 100vw;
     }
     
-    /* Ensure internal app components share the unified master canvas */
-    .stApp {
+    /* 2. Completely dissolve intermediate blocks so background is visible */
+    [data-testid="stAppViewContainer"] > section, [data-testid="stMainSpaceHolder"], .stAppViewBlockContainer {
         background: transparent !important;
     }
     
-    /* Premium card panel container overlays for elite font legibility */
+    /* 3. Sleek, semi-transparent card container so fonts are hyper-clear on mobile */
     .block-container {
-        background: rgba(13, 14, 18, 0.75);
+        background: rgba(13, 14, 18, 0.78) !important;
         padding: 2rem 1.5rem !important;
-        border-radius: 16px;
-        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        margin-top: 1rem;
+        border-radius: 16px !important;
+        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        margin-top: 1rem !important;
+        max-width: 550px !important;
     }
 
-    /* Contrast stabilization adjustments */
+    /* Text contrast safeguards */
     p, span, label, .stSubheader {
         color: #e2e7f3 !important;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        font-weight: 500;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+        font-weight: 500 !important;
     }
     
     hr {
