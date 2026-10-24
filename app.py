@@ -13,7 +13,7 @@ st.markdown(
     /* Injects a custom dark high-contrast ninja silhouette image as a fixed frame background */
     .stApp {
         background-image: linear-gradient(rgba(13, 14, 18, 0.85), rgba(20, 22, 28, 0.9)), 
-                          url("https://unsplash.com") !important;
+                          url("https://peakpx.com") !important;
         background-size: cover !important;
         background-position: center !important;
         background-attachment: fixed !important;
