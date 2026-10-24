@@ -1,4 +1,4 @@
-import streamlit as st
+ import streamlit as st
 import numpy as np
 
 # Mobile optimization layout
@@ -6,8 +6,8 @@ st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 st.title("🏹 Evony Spawn Generator")
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your current spawns.")
 
-# Fixed Hive Coordinates
-HIVE_X, HIVE_Y = 356, 721
+# Fixed Hive Coordinates (Updated to 350, 745)
+HIVE_X, HIVE_Y = 350, 745
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
 # Reset Functionality
