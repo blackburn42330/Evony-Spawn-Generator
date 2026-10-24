@@ -6,17 +6,36 @@ import altair as alt
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 
-# Visual Styling Anchors for High Contrast Slate Cards
+# 🥷 NATIVE BASE64 SILHOUETTE ENGINE: Embeds a faded full-body ninja profile completely into the master full-screen page background
 st.markdown("""
     <style>
+    /* Absolute target to inject the text-encoded graphic into Streamlit's base webpage viewport */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main, .stApp {
+        background-color: #0b0c10 !important;
+        background-image: linear-gradient(rgba(11, 12, 16, 0.88), rgba(11, 12, 16, 0.94)), 
+                          url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBmaWxsPSIjRkZEMzAwIiBvcGFjaXR5PSIwLjA1IiBkPSJNNTAsMTVDNDUuNiwxNSw0MiwxOC42LDQyLDIzczMuNiw4LDgsOHM4LTMuNiw4LThTNTQuNCwxNSw1MCwxNXogTTMyLDM4YzAsMCw0LTYsOC04aDIwYzQsMiw4LDgsOCw4bC00LDE4aC00bDEtMTJsLTUtMmgtMTBsLTUsMmwxLDEyaC00TDMyLDM4eiBNMzUsNjBoMzB2NEgzNVY2MHogTTM4LDY4aDI0djNIMzhWNjh6IE00Myw3NmgxNHYyaC0xNFY3NnoiLz48L3N2Zz4=") !important;
+        background-size: 340px !important;
+        background-position: center 25% !important;
+        background-repeat: no-repeat !important;
+        background-attachment: fixed !important;
+    }
+    
+    /* Dissolve layout blockers to allow the background character to pass through behind everything */
+    [data-testid="stAppViewContainer"] > section, [data-testid="stMainSpaceHolder"], .stAppViewBlockContainer, [data-testid="stVerticalBlock"] {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Premium card panel container overlay so text fields stay super sharp on your screen */
     .block-container {
-        background: #111318 !important; 
+        background: rgba(17, 19, 24, 0.83) !important; 
         padding: 2rem 1.5rem !important;
         border-radius: 16px !important; 
         box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7) !important;
-        border: 1px solid rgba(255, 215, 0, 0.15) !important; 
+        border: 1px solid rgba(255, 215, 0, 0.12) !important; 
         margin-top: 1rem !important;
     }
+    
     p, span, label, .stSubheader {
         color: #e2e7f3 !important; 
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important; 
@@ -48,24 +67,6 @@ st.markdown(
 )
 
 st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 175km away from rivals.")
-
-# 🥷 STABLE EMBEDDED SHADOW BANNER (Bypasses background crashes completely)
-st.markdown(
-    """
-    <div style="
-        background: rgba(255, 215, 0, 0.03);
-        border: 1px dashed rgba(255, 215, 0, 0.2);
-        padding: 20px;
-        border-radius: 8px;
-        text-align: center;
-        margin: 15px 0;
-    ">
-        <span style="font-size: 55px; opacity: 0.25; display: block; margin-bottom: 5px;">🥷</span>
-        <span style="color: rgba(226, 231, 243, 0.4); font-family: monospace; font-size: 11px; letter-spacing: 2px;">NINJA STRATEGIC SCANNER ACTIVE</span>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
 
 # Fixed True Hive Display Coordinates
 HIVE_X, HIVE_Y = 356, 721
