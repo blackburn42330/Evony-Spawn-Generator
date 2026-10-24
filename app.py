@@ -158,7 +158,7 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         target_x = int(valid_x[closest_idx])
         target_y = int(valid_y[closest_idx])
         
-        # Measures exact distance from the real visual home base, rounded to a whole integer
+        # Measures exact whole distance from the true home castle base
         true_dist = int(round(np.sqrt((target_x - TRUE_HIVE_X)**2 + (target_y - TRUE_HIVE_Y)**2)))
         
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
@@ -168,36 +168,47 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         min_x, max_x = MATH_HIVE_X - 200, MATH_HIVE_X + 200
         min_y, max_y = MATH_HIVE_Y - 200, MATH_HIVE_Y + 200
 
-        # Create numerical arrays for explicit axis line positioning
+        # Numerical step configurations
         x_ticks = list(range(min_x, max_x + 1, 20))
         y_ticks = list(range(min_y, max_y + 1, 20))
 
-        # Hardcoded Axis Shared Configurations
         x_axis_config = alt.Axis(values=x_ticks, format='d', grid=True)
         y_axis_config = alt.Axis(values=y_ticks, format='d', grid=True)
 
-        # Base structural mapping definition sheet to enforce uniform scale steps globally
-        base_chart = alt.Chart().encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config)
-        )
-
-        # Build dataframes with explicit text characters included inside the columns
+        # Separate independent Dataframes
         hive_data = pd.DataFrame([{"X": TRUE_HIVE_X, "Y": TRUE_HIVE_Y, "Emoji": "🏰"}])
         target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
         spawn_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
         spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
 
-        # Plot components cleanly by pointing straight to the data text column
-        hive_layer = base_chart.mark_text(size=35).encode(text='Emoji:N').data(hive_data)
-        target_layer = base_chart.mark_text(size=35).encode(text='Emoji:N').data(target_data)
-        monster_layer = base_chart.mark_text(size=28).encode(text='Emoji:N').data(spawn_data)
-        
-        number_layer = base_chart.mark_text(
-            size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
-        ).encode(text='Num:N').data(spawn_data)
+        # Create isolated mapping components explicitly referencing data constraints up front
+        hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
+        )
 
-        # Merge onto map container panel
+        target_layer = alt.Chart(target_data).mark_text(size=35).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
+        )
+
+        monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
+        )
+        
+        number_layer = alt.Chart(spawn_data).mark_text(
+            size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
+        ).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Num:N'
+        )
+
+        # Merge onto the final radar chart dashboard container panel
         final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
