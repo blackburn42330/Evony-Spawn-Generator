@@ -27,7 +27,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 175km away from rivals.")
+st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 200km away from rivals.")
 
 # Locked-in True Alliance Home Base
 HIVE_X, HIVE_Y = 356, 721
@@ -105,10 +105,10 @@ if st.button("🥷 Calculate Next Target", type="primary"):
     for sx, sy in spawns:
         valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 140)
         
-    # Exclusion 2: 175km absolute ban from enemy alliances
+    # Exclusion 2: 200km absolute ban from enemy alliances (Updated)
     rivals = [(320, 483), (611, 551), (672, 771)]
     for rx, ry in rivals:
-        valid_mask &= (np.sqrt((X - rx)**2 + (Y - ry)**2) > 175)
+        valid_mask &= (np.sqrt((X - rx)**2 + (Y - ry)**2) > 200)
         
     valid_x, valid_y = X[valid_mask], Y[valid_mask]
     
