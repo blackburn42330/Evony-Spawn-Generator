@@ -95,7 +95,6 @@ st.write("---")
 
 # Tactical Scanning Algorithm
 if st.button("🥷 Calculate Next Target", type="primary"):
-    # Scans the entire 1200x12000 server grid map to give you total coordinate freedom
     x_range = np.arange(0, 1200)
     y_range = np.arange(0, 1200)
     X, Y = np.meshgrid(x_range, y_range)
@@ -142,14 +141,19 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         
         monster_list = [{"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "TextLabel": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"} for idx, (sx, sy) in enumerate(spawns, 1)]
         
+        rival_list = []
         for r in rivals:
             rx, ry = r["X"], r["Y"]
             if min_x <= rx <= max_x and min_y <= ry <= max_y:
-                monster_list.append({"X_iso": rx - ry, "Y_iso": rx + ry, "Emoji": "💀", "TextLabel": r["Tag"], "Label": f"{r['Tag']} ({rx},{ry})"} )
+                # Add skull icons to list
+                monster_list.append({"X_iso": rx - ry, "Y_iso": rx + ry, "Emoji": "💀", "TextLabel": r["Tag"], "Label": f"{r['Tag']} ({rx},{ry})"})
+                # Separate list for accurate mapping calculations of danger circles
+                rival_list.append({"X_iso": rx - ry, "Y_iso": rx + ry})
                 
         spawn_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "TextLabel", "Label"])
+        danger_ring_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=["X_iso", "Y_iso"])
 
-        # Isometric Scales: reverse=True on the vertical axis ensures (0,0) sits at the top point
+        # Isometric Scales
         x_scale = alt.Scale(domain=[min_x_iso, max_x_iso])
         y_scale = alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
 
@@ -167,8 +171,15 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         ).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N'
         )
+        
+        # 🔴 DANGER ZONE LAYER: Draws a faded, clear red protective vector boundary ring around enemy hubs (200km radius equivalent size)
+        danger_layer = alt.Chart(danger_ring_data).mark_point(
+            size=9500, strokeWidth=1.5, color='#FF4B4B', opacity=0.22, filled=False
+        ).encode(
+            x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None)
+        )
 
-        final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(width=500, height=450).configure_view(strokeOpacity=0)
+        final_map = alt.layer(danger_layer, hive_layer, target_layer, monster_layer, number_layer).properties(width=500, height=450).configure_view(strokeOpacity=0)
         st.write("### 🥷 Ninja Clan Inc.")
         st.altair_chart(final_map, use_container_width=True)
     else:
