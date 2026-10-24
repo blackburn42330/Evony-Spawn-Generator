@@ -4,20 +4,28 @@ import numpy as np
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 
-# Custom Dynamic Ninja Graphic Background Layer
+# Custom Full-Screen Fixed Background Style Block
 st.markdown(
     """
     <style>
-    /* Injects an optimized dark high-contrast ninja image as a fixed frame background */
-    .stApp {
-        background-image: linear-gradient(rgba(13, 14, 18, 0.85), rgba(20, 22, 28, 0.9)), 
+    /* Absolute target to apply image to the structural viewport wrapper */
+    html, body, [data-testid="stAppViewContainer"] {
+        background-image: linear-gradient(rgba(13, 14, 18, 0.88), rgba(20, 22, 28, 0.93)), 
                           url("https://freepik.com") !important;
         background-size: cover !important;
-        background-position: center !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
         background-attachment: fixed !important;
+        height: 100vh;
+        width: 100vw;
     }
     
-    /* Transparent layered component sheets for high font readability */
+    /* Ensure internal app components share the unified master canvas */
+    .stApp {
+        background: transparent !important;
+    }
+    
+    /* Premium card panel container overlays for elite font legibility */
     .block-container {
         background: rgba(13, 14, 18, 0.75);
         padding: 2rem 1.5rem !important;
@@ -27,7 +35,7 @@ st.markdown(
         margin-top: 1rem;
     }
 
-    /* Input title contrast stabilization adjustments */
+    /* Contrast stabilization adjustments */
     p, span, label, .stSubheader {
         color: #e2e7f3 !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
