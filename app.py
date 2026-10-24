@@ -4,34 +4,53 @@ import numpy as np
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 
-# Custom Dynamic Ninja Graphic Background Layer
+# Global structural bypass override styling
 st.markdown(
     """
     <style>
-    /* Injects an optimized dark high-contrast ninja image as a fixed frame background */
-    .stApp {
-        background-image: linear-gradient(rgba(13, 14, 18, 0.85), rgba(20, 22, 28, 0.9)), 
-                          url("https://freepik.com") !important;
+    /* Force absolute placement on the viewport root level to stretch full screen */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main, .stApp {
+        background-image: linear-gradient(rgba(10, 11, 15, 0.85), rgba(15, 16, 22, 0.92)), 
+                          url("https://unsplash.com") !important;
         background-size: cover !important;
-        background-position: center !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
         background-attachment: fixed !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
-    /* Transparent layered component sheets for high font readability */
-    .block-container {
-        background: rgba(13, 14, 18, 0.75);
+    /* Disjoint layout container bounds */
+    [data-testid="stAppViewContainer"] > section, [data-testid="stMainSpaceHolder"], .stAppViewBlockContainer {
+        background: transparent !important;
+    }
+    
+    /* Eliminate default web padding frames creating left/right blank margins */
+    .stAppViewMain, .main .block-container {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* Sleek inner form card container overlay */
+    .block-container > div {
+        background: rgba(13, 14, 18, 0.8) !important;
         padding: 2rem 1.5rem !important;
-        border-radius: 16px;
-        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        margin-top: 1rem;
+        border-radius: 16px !important;
+        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        margin: 1rem auto !important;
+        max-width: 550px !important;
     }
 
-    /* Input title contrast stabilization adjustments */
+    /* Clear text stabilization layers */
     p, span, label, .stSubheader {
         color: #e2e7f3 !important;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        font-weight: 500;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+        font-weight: 500 !important;
     }
     
     hr {
