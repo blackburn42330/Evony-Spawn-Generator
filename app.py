@@ -90,7 +90,8 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
         
-        st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
+        # Text updated successfully to requested phrasing
+        st.success(f"🎯 **Port here and continue spawning:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{true_dist} km")
         
         CENTER_X, CENTER_Y = 520, 600
