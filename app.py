@@ -95,7 +95,7 @@ st.write("---")
 
 # Tactical Scanning Algorithm
 if st.button("🥷 Calculate Next Target", type="primary"):
-    # Broad global matrix generator sweep (Allows the algorithm to explore options over the full map grid)
+    # Scans the entire 1200x12000 server grid map to give you total coordinate freedom
     x_range = np.arange(0, 1200)
     y_range = np.arange(0, 1200)
     X, Y = np.meshgrid(x_range, y_range)
@@ -126,10 +126,10 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{true_dist} km")
         
-        # 🎯 VISUAL RE-CENTER OVERRIDE: Centers the 700x700 map frame perfectly on coordinates (600, 600)
-        CENTER_X, CENTER_Y = 600, 600
-        min_x, max_x = CENTER_X - 350, CENTER_X + 350
-        min_y, max_y = CENTER_Y - 350, CENTER_Y + 350
+        # 🎯 OPTIMAL STRATEGIC CENTER: Sets a balanced 650x650 grid window centered at (460, 640)
+        CENTER_X, CENTER_Y = 460, 640
+        min_x, max_x = CENTER_X - 325, CENTER_X + 325
+        min_y, max_y = CENTER_Y - 325, CENTER_Y + 325
 
         # Calculate isometric visual scaling parameters 
         min_x_iso = min_x - max_y
