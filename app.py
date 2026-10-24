@@ -148,7 +148,7 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         dist_to_spawn = np.sqrt((X - sx)**2 + (Y - sy)**2)
         valid_mask &= (dist_to_spawn > 140)
         
-    # 2. Rival alliance buffer check (175km)
+    # 2. Rival alliance buffer check (175km absolute ban)
     rivals = [(320, 483), (611, 551), (672, 771)]
     for rx, ry in rivals:
         dist_to_rival = np.sqrt((X - rx)**2 + (Y - ry)**2)
@@ -178,12 +178,7 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         x_axis_config = alt.Axis(values=x_ticks, format='d', grid=True)
         y_axis_config = alt.Axis(values=y_ticks, format='d', grid=True)
 
-        base_chart = alt.Chart().encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config)
-        )
-
-        # Isolated pure dataframes to prevent engine data-link crashes
+        # Isolated clean Dataframes
         hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Emoji": "🏰"}])
         target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
         
@@ -196,26 +191,41 @@ if st.button("🥷 Calculate Next Target", type="primary"):
                 rival_list.append({"X": rx, "Y": ry, "Emoji": "💀"})
         rival_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=["X", "Y", "Emoji"])
 
-        # Create isolated mapping components explicitly referencing data columns directly up front
-        hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(text='Emoji:N')
-        target_layer = alt.Chart(target_data).mark_text(size=35).encode(text='Emoji:N')
-        monster_layer = alt.Chart(monster_data).mark_text(size=28).encode(text='Emoji:N')
+        # Construct each layer explicitly setting the shared axis config parameters inside the layer itself
+        hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
+        )
+
+        target_layer = alt.Chart(target_data).mark_text(size=35).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
+        )
+
+        monster_layer = alt.Chart(monster_data).mark_text(size=28).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
+        )
         
-        # Dedicated rival skull layer with its own clean dataframe
-        rival_layer = alt.Chart(rival_data).mark_text(size=28).encode(text='Emoji:N')
+        rival_layer = alt.Chart(rival_data).mark_text(size=28).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
+        )
         
         number_layer = alt.Chart(monster_data).mark_text(
             size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
-        ).encode(text='Num:N')
+        ).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Num:N'
+        )
 
-        # Compile all sub-layers cleanly through the base_chart engine parent template wrapper
-        final_map = alt.layer(
-            base_chart.data(hive_data) + hive_layer,
-            base_chart.data(target_data) + target_layer,
-            base_chart.data(monster_data) + monster_layer,
-            base_chart.data(monster_data) + number_layer,
-            base_chart.data(rival_data) + rival_layer
-        ).properties(
+        # Merge onto map container panel through straight layer mapping components
+        final_map = alt.layer(hive_layer, target_layer, monster_layer, rival_layer, number_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
 
