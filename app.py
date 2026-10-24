@@ -5,35 +5,44 @@ import altair as alt
 
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 
-# Native Embedded Grid Texture Layer (Bypasses URL blocks for full mobile compatibility)
+# Bulletproof Multi-Layer Structural Bypass Override
 st.markdown("""
     <style>
+    /* 1. Target the absolute outermost viewport containers directly */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main, .stApp {
-        background-color: #0b0c10 !important;
+        background-color: #0b0e14 !important;
         background-image: 
-            radial-gradient(rgba(255, 215, 0, 0.05) 1px, transparent 0),
-            radial-gradient(rgba(255, 215, 0, 0.05) 1px, transparent 0) !important;
-        background-size: 24px 24px !important;
-        background-position: 0 0, 12px 12px !important;
+            radial-gradient(rgba(255, 215, 0, 0.08) 1.5px, transparent 1.5px),
+            radial-gradient(rgba(255, 215, 0, 0.04) 1px, transparent 1px) !important;
+        background-size: 32px 32px, 16px 32px !important;
+        background-position: 0 0, 16px 16px !important;
         background-attachment: fixed !important;
     }
-    [data-testid="stAppViewContainer"] > section, [data-testid="stMainSpaceHolder"], .stAppViewBlockContainer {
+    
+    /* 2. Dissolve all intervening system blocking blocks completely */
+    section, div, [data-testid="stAppViewBlockContainer"], .stAppViewBlockContainer, [data-testid="stVerticalBlock"] {
+        background-color: transparent !important;
         background: transparent !important;
     }
-    .block-container {
-        background: rgba(17, 19, 24, 0.85) !important; 
-        padding: 2rem 1.5rem !important;
+    
+    /* 3. Re-wrap just the central text container card panel in a sleek semi-transparent tactical slate */
+    [data-testid="stAppViewBlockContainer"] > div {
+        background: rgba(17, 20, 28, 0.88) !important; 
+        padding: 2.5rem 1.8rem !important;
         border-radius: 16px !important; 
-        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7) !important;
-        border: 1px solid rgba(255, 215, 0, 0.1) !important; 
-        margin-top: 1rem !important;
+        box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.8) !important;
+        border: 1px solid rgba(255, 215, 0, 0.12) !important; 
+        margin-top: 1.5rem !important;
     }
-    p, span, label, .stSubheader {
+    
+    /* Font contrast anchors */
+    p, span, label, .stSubheader, h1, h2, h3 {
         color: #e2e7f3 !important; 
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important; 
         font-weight: 500 !important;
     }
-    hr { border-color: rgba(255, 215, 0, 0.15) !important; }
+    
+    hr { border-color: rgba(255, 215, 0, 0.2) !important; }
     </style>
 """, unsafe_allow_html=True)
 
