@@ -1,5 +1,6 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
@@ -87,59 +88,34 @@ for i in range(1, 6):
 
 spawns = []
 
-# --- Dynamic Compact Side-by-Side Row Logic ---
-
-# Spawn 1 Layout
-c1_cols = st.columns(2)
-with c1_cols[0]:
-    x_1 = st.number_input("Spawn 1 X", min_value=0, max_value=1200, value=st.session_state["x_1"], key="x_1")
-with c1_cols[1]:
-    y_1 = st.number_input("Spawn 1 Y", min_value=0, max_value=1200, value=st.session_state["y_1"], key="y_1")
+# --- Dynamic Cascading Row Logic ---
+x_1 = st.number_input("Spawn 1 X", min_value=0, max_value=1200, value=st.session_state["x_1"], key="x_1")
+y_1 = st.number_input("Spawn 1 Y", min_value=0, max_value=1200, value=st.session_state["y_1"], key="y_1")
 
 if x_1 > 0 and y_1 > 0: 
     spawns.append((x_1, y_1))
     st.write("---")
     
-    # Spawn 2 Layout
-    c2_cols = st.columns(2)
-    with c2_cols[0]:
-        x_2 = st.number_input("Spawn 2 X", min_value=0, max_value=1200, value=st.session_state["x_2"], key="x_2")
-    with c2_cols[1]:
-        y_2 = st.number_input("Spawn 2 Y", min_value=0, max_value=1200, value=st.session_state["y_2"], key="y_2")
-        
+    x_2 = st.number_input("Spawn 2 X", min_value=0, max_value=1200, value=st.session_state["x_2"], key="x_2")
+    y_2 = st.number_input("Spawn 2 Y", min_value=0, max_value=1200, value=st.session_state["y_2"], key="y_2")
     if x_2 > 0 and y_2 > 0:
         spawns.append((x_2, y_2))
         st.write("---")
         
-        # Spawn 3 Layout
-        c3_cols = st.columns(2)
-        with c3_cols[0]:
-            x_3 = st.number_input("Spawn 3 X", min_value=0, max_value=1200, value=st.session_state["x_3"], key="x_3")
-        with c3_cols[1]:
-            y_3 = st.number_input("Spawn 3 Y", min_value=0, max_value=1200, value=st.session_state["y_3"], key="y_3")
-            
+        x_3 = st.number_input("Spawn 3 X", min_value=0, max_value=1200, value=st.session_state["x_3"], key="x_3")
+        y_3 = st.number_input("Spawn 3 Y", min_value=0, max_value=1200, value=st.session_state["y_3"], key="y_3")
         if x_3 > 0 and y_3 > 0:
             spawns.append((x_3, y_3))
             st.write("---")
             
-            # Spawn 4 Layout
-            c4_cols = st.columns(2)
-            with c4_cols[0]:
-                x_4 = st.number_input("Spawn 4 X", min_value=0, max_value=1200, value=st.session_state["x_4"], key="x_4")
-            with c4_cols[1]:
-                y_4 = st.number_input("Spawn 4 Y", min_value=0, max_value=1200, value=st.session_state["y_4"], key="y_4")
-                
+            x_4 = st.number_input("Spawn 4 X", min_value=0, max_value=1200, value=st.session_state["x_4"], key="x_4")
+            y_4 = st.number_input("Spawn 4 Y", min_value=0, max_value=1200, value=st.session_state["y_4"], key="y_4")
             if x_4 > 0 and y_4 > 0:
                 spawns.append((x_4, y_4))
                 st.write("---")
                 
-                # Spawn 5 Layout
-                c5_cols = st.columns(2)
-                with c5_cols[0]:
-                    x_5 = st.number_input("Spawn 5 X", min_value=0, max_value=1200, value=st.session_state["x_5"], key="x_5")
-                with c5_cols[1]:
-                    y_5 = st.number_input("Spawn 5 Y", min_value=0, max_value=1200, value=st.session_state["y_5"], key="y_5")
-                    
+                x_5 = st.number_input("Spawn 5 X", min_value=0, max_value=1200, value=st.session_state["x_5"], key="x_5")
+                y_5 = st.number_input("Spawn 5 Y", min_value=0, max_value=1200, value=st.session_state["y_5"], key="y_5")
                 if x_5 > 0 and y_5 > 0:
                     spawns.append((x_5, y_5))
 
@@ -173,7 +149,21 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{total_dist:.1f} km")
         
-        # Quick-copy text field bar
-        st.text_input("📋 Tap below to select and copy:", value=f"X:{target_x} Y:{target_y}")
+        # 📊 Dynamic Map Visualizer Data Building Block
+        map_points = [{"X": HIVE_X, "Y": HIVE_Y, "Spot Type": "Hive Anchor (Gold)"}]
+        for idx, (sx, sy) in enumerate(spawns, 1):
+            map_points.append({"X": sx, "Y": sy, "Spot Type": f"Active Spawn {idx} (Red)"})
+        map_points.append({"X": target_x, "Y": target_y, "Spot Type": "Next Best Target (Green)"})
+        
+        df = pd.DataFrame(map_points)
+        
+        st.write("### 🗺️ Alliance Sector Map")
+        st.scatter_chart(
+            data=df,
+            x="X",
+            y="Y",
+            color="Spot Type",
+            use_container_width=True
+        )
     else:
         st.error("No valid coordinates found in the search sector. Try clearing some old spawns!")
