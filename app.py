@@ -95,8 +95,8 @@ st.write("---")
 
 # Tactical Scanning Algorithm
 if st.button("🥷 Calculate Next Target", type="primary"):
-    x_range = np.arange(max(0, HIVE_X - 200), min(1200, HIVE_X + 200))
-    y_range = np.arange(max(0, HIVE_Y - 200), min(1200, HIVE_Y + 200))
+    x_range = np.arange(max(0, HIVE_X - 250), min(1200, HIVE_X + 250))
+    y_range = np.arange(max(0, HIVE_Y - 250), min(1200, HIVE_Y + 250))
     X, Y = np.meshgrid(x_range, y_range)
     X, Y = X.flatten(), Y.flatten()
     valid_mask = np.ones_like(X, dtype=bool)
@@ -121,9 +121,9 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{true_dist} km")
         
-        # 400x400 map dimension bounds configuration markers
-        min_x, max_x = HIVE_X - 200, HIVE_X + 200
-        min_y, max_y = HIVE_Y - 200, HIVE_Y + 200
+        # 500x500 map dimension bounds configuration markers (Updated)
+        min_x, max_x = HIVE_X - 250, HIVE_X + 250
+        min_y, max_y = HIVE_Y - 250, HIVE_Y + 250
 
         # Calculate isometric Visual parameters to stretch and rotate diamond boundaries securely
         min_x_iso = min_x - max_y
@@ -153,7 +153,7 @@ if st.button("🥷 Calculate Next Target", type="primary"):
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
         )
         monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
-            x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
+            x=alt.X('X_iso:Q', scale=alt.Scale(domain=[min_x_iso, max_x_iso]), axis=None), y=alt.Y('Y_iso:Q', scale=alt.Scale(domain=[min_y_iso, max_y_iso]), axis=None), text='Emoji:N', tooltip=['Label:N']
         )
         number_layer = alt.Chart(spawn_data[spawn_data['Num'] != 'R']).mark_text(size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Num:N'
