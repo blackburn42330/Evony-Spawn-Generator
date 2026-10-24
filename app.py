@@ -36,7 +36,8 @@ st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 # Clear All Fields Mechanism
 if st.button("🔄 Clear All Fields", type="secondary"):
     for i in range(1, 6):
-        st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
+        st.session_state[f"x_{i}"] = ""
+        st.session_state[f"y_{i}"] = ""
     st.rerun()
 
 st.subheader("📍 Active Spawns")
@@ -125,10 +126,10 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{true_dist} km")
         
-        # 🎯 OPTIMAL STRATEGIC CENTER: Sets a balanced 650x650 grid window centered at (460, 640)
-        CENTER_X, CENTER_Y = 460, 640
-        min_x, max_x = CENTER_X - 325, CENTER_X + 325
-        min_y, max_y = CENTER_Y - 325, CENTER_Y + 325
+        # 🎯 OPTIMAL STRATEGIC CENTER: Sets a balanced 700x700 grid window centered at (520, 600)
+        CENTER_X, CENTER_Y = 520, 600
+        min_x, max_x = CENTER_X - 350, CENTER_X + 350
+        min_y, max_y = CENTER_Y - 350, CENTER_Y + 350
 
         # Calculate isometric visual scaling parameters 
         min_x_iso = min_x - max_y
@@ -138,10 +139,16 @@ if st.button("🥷 Calculate Next Target", type="primary"):
 
         hive_data = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
         target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
-        
-        # 👑 Server Throne Dataframe Asset Locked at (600, 600)
         throne_data = pd.DataFrame([{"X_iso": 600 - 600, "Y_iso": 600 + 600, "Emoji": "👑", "Label": "Throne (600,600)"}])
         
+        # 🏛️ Labeled Server Temples
+        temple_list = [
+            {"X_iso": 300 - 900, "Y_iso": 300 + 900, "Emoji": "🏛️", "Label": "Hunter Temple (300,900)"},
+            {"X_iso": 300 - 300, "Y_iso": 300 + 300, "Emoji": "🏛️", "Label": "Harvest Temple (300,300)"},
+            {"X_iso": 900 - 300, "Y_iso": 900 + 300, "Emoji": "🏛️", "Label": "Forging Temple (900,300)"}
+        ]
+        temple_data = pd.DataFrame(temple_list)
+
         monster_list = [{"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "TextLabel": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"} for idx, (sx, sy) in enumerate(spawns, 1)]
         
         rival_list = []
@@ -167,6 +174,9 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
         )
+        temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(
+            x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
+        )
         monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
         )
@@ -181,15 +191,13 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         ).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None)
         )
-        
         danger_border_layer = alt.Chart(danger_ring_data).mark_point(
             size=9500, strokeWidth=3.0, color='#FF1744', opacity=0.70, filled=False
         ).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None)
         )
 
-        # Combined layout framework stack with the new Throne layer injected safely
-        final_map = alt.layer(danger_fill_layer, danger_border_layer, hive_layer, target_layer, throne_layer, monster_layer, number_layer).properties(width=500, height=450).configure_view(strokeOpacity=0)
+        final_map = alt.layer(danger_fill_layer, danger_border_layer, hive_layer, target_layer, throne_layer, temple_layer, monster_layer, number_layer).properties(width=500, height=450).configure_view(strokeOpacity=0)
         st.write("### 🥷 Ninja Clan Inc.")
         st.altair_chart(final_map, use_container_width=True)
     else:
