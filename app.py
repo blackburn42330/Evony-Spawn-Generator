@@ -12,13 +12,13 @@ st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
 # UI Layout for Inputs
 st.subheader("📍 Active Spawns")
-cols = st.columns(2)
 
 spawns = []
 for i in range(1, 6):
-    with cols:
+    cols = st.columns(2)
+    with cols[0]:
         x_val = st.number_input(f"Spawn {i} X", min_value=0, max_value=1200, value=0, key=f"x_{i}")
-    with cols:
+    with cols[1]:
         y_val = st.number_input(f"Spawn {i} Y", min_value=0, max_value=1200, value=0, key=f"y_{i}")
     if x_val > 0 and y_val > 0:
         spawns.append((x_val, y_val))
