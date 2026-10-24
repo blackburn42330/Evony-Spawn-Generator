@@ -29,6 +29,17 @@ st.markdown(
 
 st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 200km away from rivals.")
 
+# 📖 Easy-to-Follow Alliance Instructions Block
+st.markdown(
+    """
+    ### 📋 Instructions:
+    1. Enter the coordinates of your **first spawn** below.
+    2. Click **🥷 Calculate Next Target** to get a safe location to teleport to.
+    3. Type the coordinates of your **next spawn** into the new box that appears.
+    4. Keep repeating these steps until you are completely done spawning monsters!
+    """
+)
+
 # Locked-in True Alliance Home Base
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
