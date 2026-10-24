@@ -6,61 +6,17 @@ import altair as alt
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 
-# 🥷 NATIVE GEOMETRIC VECTOR OVERRIDE: Traces a giant, faded ninja profile out of background math vectors
+# Visual Styling Anchors for High Contrast Slate Cards
 st.markdown("""
     <style>
-    /* Absolute viewport canvas settings */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main, .stApp {
-        background-color: #0b0c10 !important;
-        position: relative !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow-x: hidden !important;
-    }
-    
-    /* Injects a massive, faded native polygon shape acting as a silhouette backdrop layer */
-    [data-testid="stAppViewContainer"]::before {
-        content: "" !important;
-        position: fixed !important;
-        top: 20% !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        width: 320px !important;
-        height: 320px !important;
-        background: #ffd700 !important;
-        opacity: 0.04 !important;
-        z-index: 0 !important;
-        pointer-events: none !important;
-        /* Mathematical polygon path tracing out a classic ninja mask silhouette */
-        clip-path: polygon(
-            50% 0%, 75% 15%, 85% 40%, 80% 65%, 65% 85%, 50% 100%, 35% 85%, 20% 65%, 15% 40%, 25% 15%,
-            /* Cutout layers for the headband and eyes mask slits */
-            50% 0%, 25% 15%, 30% 35%, 70% 35%, 75% 15%, 50% 0%,
-            40% 45%, 45% 50%, 40% 55%, 35% 50%, 40% 45%,
-            60% 45%, 65% 50%, 60% 55%, 55% 50%, 60% 45%
-        ) !important;
-    }
-    
-    /* Dissolve all intervening system blocking containers completely */
-    [data-testid="stAppViewContainer"] > section, [data-testid="stMainSpaceHolder"], .stAppViewBlockContainer, [data-testid="stVerticalBlock"] {
-        background: transparent !important;
-        background-color: transparent !important;
-    }
-    
-    /* Sleek, semi-transparent card container so text elements are hyper-clear */
     .block-container {
-        background: rgba(17, 19, 24, 0.85) !important; 
+        background: #111318 !important; 
         padding: 2rem 1.5rem !important;
         border-radius: 16px !important; 
         box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7) !important;
-        border: 1px solid rgba(255, 215, 0, 0.12) !important; 
+        border: 1px solid rgba(255, 215, 0, 0.15) !important; 
         margin-top: 1rem !important;
-        position: relative !important;
-        z-index: 1 !important;
     }
-    
     p, span, label, .stSubheader {
         color: #e2e7f3 !important; 
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important; 
@@ -71,8 +27,45 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🥷 Evony Spawn Generator")
-st.markdown("<div style='text-align: left; font-family: \"Arial Black\", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>", unsafe_allow_html=True)
+
+# Flashy Neon Gold Subtitle Style
+st.markdown(
+    """
+    <div style="
+        text-align: left; 
+        font-family: 'Arial Black', Gadget, sans-serif; 
+        font-size: 22px; 
+        font-weight: bold; 
+        color: #FFD700; 
+        text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; 
+        padding-bottom: 15px; 
+        margin-top: -10px;
+    ">
+        ✨ BBR is an app writing genius ✨
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+
 st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 175km away from rivals.")
+
+# 🥷 STABLE EMBEDDED SHADOW BANNER (Bypasses background crashes completely)
+st.markdown(
+    """
+    <div style="
+        background: rgba(255, 215, 0, 0.03);
+        border: 1px dashed rgba(255, 215, 0, 0.2);
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        margin: 15px 0;
+    ">
+        <span style="font-size: 55px; opacity: 0.25; display: block; margin-bottom: 5px;">🥷</span>
+        <span style="color: rgba(226, 231, 243, 0.4); font-family: monospace; font-size: 11px; letter-spacing: 2px;">NINJA STRATEGIC SCANNER ACTIVE</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # Fixed True Hive Display Coordinates
 HIVE_X, HIVE_Y = 356, 721
