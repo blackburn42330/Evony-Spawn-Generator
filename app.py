@@ -3,48 +3,35 @@ import numpy as np
 import pandas as pd
 import altair as alt
 
+# Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 
-# Bulletproof Multi-Layer Structural Bypass Override
+# Visual Styling Anchors for High Contrast
 st.markdown("""
     <style>
-    /* 1. Target the absolute outermost viewport containers directly */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main, .stApp {
-        background-color: #0b0e14 !important;
-        background-image: 
-            radial-gradient(rgba(255, 215, 0, 0.08) 1.5px, transparent 1.5px),
-            radial-gradient(rgba(255, 215, 0, 0.04) 1px, transparent 1px) !important;
-        background-size: 32px 32px, 16px 32px !important;
-        background-position: 0 0, 16px 16px !important;
-        background-attachment: fixed !important;
-    }
-    
-    /* 2. Dissolve all intervening system blocking blocks completely */
-    section, div, [data-testid="stAppViewBlockContainer"], .stAppViewBlockContainer, [data-testid="stVerticalBlock"] {
-        background-color: transparent !important;
-        background: transparent !important;
-    }
-    
-    /* 3. Re-wrap just the central text container card panel in a sleek semi-transparent tactical slate */
-    [data-testid="stAppViewBlockContainer"] > div {
-        background: rgba(17, 20, 28, 0.88) !important; 
-        padding: 2.5rem 1.8rem !important;
+    .block-container {
+        background: #111318 !important; 
+        padding: 2rem 1.5rem !important;
         border-radius: 16px !important; 
-        box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.8) !important;
-        border: 1px solid rgba(255, 215, 0, 0.12) !important; 
-        margin-top: 1.5rem !important;
+        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7) !important;
+        border: 1px solid rgba(255, 215, 0, 0.15) !important; 
+        margin-top: 1rem !important;
     }
-    
-    /* Font contrast anchors */
-    p, span, label, .stSubheader, h1, h2, h3 {
+    p, span, label, .stSubheader {
         color: #e2e7f3 !important; 
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important; 
         font-weight: 500 !important;
     }
-    
-    hr { border-color: rgba(255, 215, 0, 0.2) !important; }
+    hr { border-color: rgba(255, 215, 0, 0.15) !important; }
     </style>
 """, unsafe_allow_html=True)
+
+# 🥷 NATIVE GRAPHIC DISPLAY OVERLAY (Bypasses all background restrictions)
+st.image(
+    "https://unsplash.com", 
+    caption="Ninja Clan Inc. Tactics Sector",
+    use_container_width=True
+)
 
 st.title("🥷 Evony Spawn Generator")
 st.markdown("<div style='text-align: left; font-family: \"Arial Black\", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>", unsafe_allow_html=True)
