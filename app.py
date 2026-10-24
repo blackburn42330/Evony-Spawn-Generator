@@ -172,9 +172,9 @@ if st.button("🥷 Calculate Next Target", type="primary"):
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N'
         )
         
-        # 🔴 DANGER ZONE LAYER: Draws a faded, clear red protective vector boundary ring around enemy hubs (200km radius equivalent size)
+        # 🔴 HIGH-CONTRAST DANGER ZONE LAYER: Thickened bright red boundary line
         danger_layer = alt.Chart(danger_ring_data).mark_point(
-            size=9500, strokeWidth=1.5, color='#FF4B4B', opacity=0.22, filled=False
+            size=9500, strokeWidth=3.0, color='#FF1744', opacity=0.70, filled=False
         ).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None)
         )
