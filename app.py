@@ -179,42 +179,38 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         spawn_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
         spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
 
-        # Layer 1: Renders the Hive Anchor (🏰)
+        # Forced Scale Mapping: Locked to uniform 20-unit step grids
         hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y])),
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=alt.Axis(tickMinStep=20)),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=alt.Axis(tickMinStep=20)),
             text='Emoji:N'
         )
 
-        # Layer 2: Renders the Target Destination (🎯)
         target_layer = alt.Chart(target_data).mark_text(size=35).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y])),
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=alt.Axis(tickMinStep=20)),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=alt.Axis(tickMinStep=20)),
             text='Emoji:N'
         )
 
-        # Layer 3: Renders the Monster Icons (👹)
         monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y])),
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=alt.Axis(tickMinStep=20)),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=alt.Axis(tickMinStep=20)),
             text='Emoji:N'
         )
 
-        # Layer 4: Renders the Spawn Identification Numbers
         number_layer = alt.Chart(spawn_data).mark_text(
             size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
         ).encode(
-            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
-            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y])),
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=alt.Axis(tickMinStep=20)),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=alt.Axis(tickMinStep=20)),
             text='Num:N'
         )
 
-        # Merge layers onto 400x400 canvas
+        # Merge layers onto the map framework
         final_map = alt.layer(hive_layer, target_layer, monster_layer, number_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
 
-        # Replaced generic header with Ninja Clan Inc. custom title card
         st.write("### 🥷 Ninja Clan Inc.")
         st.altair_chart(final_map, use_container_width=True)
 
