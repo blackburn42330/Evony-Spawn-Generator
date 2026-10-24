@@ -136,40 +136,40 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         st.success(f"🎯 **Next Best Target Coordinates:** X: {target_x}, Y: {target_y}")
         st.metric(label="Distance from Hive", value=f"{total_dist:.1f} km")
         
-        # Define exact map limits
+        # Explicit 400x400 map scaling grid boundary parameters
         min_x, max_x = HIVE_X - 200, HIVE_X + 200
         min_y, max_y = HIVE_Y - 200, HIVE_Y + 200
 
-        # Data sets split out so we can render different shapes & hide grid pins completely
-        hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Label": "🏰 Alliance Hive", "Emoji": "🏰"}])
-        target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Label": "🎯 Next Target Target"}])
+        # Dedicated, cleaned data structures
+        hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Emoji": "🏰"}])
+        target_data = pd.DataFrame([{"X": target_x, "Y": target_y}])
         
-        spawn_list = [{"X": sx, "Y": sy, "Label": f"Active Spawn {idx}"} for idx, (sx, sy) in enumerate(spawns, 1)]
-        spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y", "Label"])
+        spawn_list = [{"X": sx, "Y": sy} for sx, sy in spawns]
+        spawn_data = pd.DataFrame(spawn_list) if spawn_list else pd.DataFrame(columns=["X", "Y"])
 
-        # Base Chart settings to handle exact 400x400 map scaling bounds
-        base_chart = alt.Chart().encode(
+        # Forced Scale Mapping: locks bounds tightly to keep Hive centered
+        hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y])),
+            text='Emoji:N'
+        )
+
+        target_layer = alt.Chart(target_data).mark_point(
+            size=300, color='#00E676', filled=True, shape='circle'
+        ).encode(
             x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
             y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]))
         )
 
-        # 1. Renders the Hive Anchor specifically using the Castle Emoji shape
-        hive_layer = alt.Chart(hive_data).mark_text(size=35, dx=0, dy=0).encode(
-            x='X:Q', y='Y:Q', text='Emoji:N'
-        )
-
-        # 2. Renders the Target Spot as a large bright green ring
-        target_layer = alt.Chart(target_data).mark_point(
-            size=300, color='#00E676', filled=True, shape='circle'
-        ).encode(x='X:Q', y='Y:Q')
-
-        # 3. Renders the active monster spawns as red dots
         spawn_layer = alt.Chart(spawn_data).mark_point(
             size=150, color='#FF4B4B', filled=True
-        ).encode(x='X:Q', y='Y:Q')
+        ).encode(
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x])),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]))
+        )
 
-        # Combine all separate component layers cleanly onto one dashboard canvas
-        final_map = alt.layer(hive_layer, target_layer, spawn_layer, data=pd.concat([hive_data, target_data, spawn_data])).properties(
+        # Assemble and drop the outer canvas frame margins
+        final_map = alt.layer(hive_layer, target_layer, spawn_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
 
