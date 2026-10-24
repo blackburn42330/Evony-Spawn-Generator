@@ -3,7 +3,46 @@ import numpy as np
 
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
-st.title("🏹 Evony Spawn Generator")
+
+# Custom Dynamic Ninja Graphic Background Layer
+st.markdown(
+    """
+    <style>
+    /* Injects an optimized dark high-contrast ninja image as a fixed frame background */
+    .stApp {
+        background-image: linear-gradient(rgba(13, 14, 18, 0.85), rgba(20, 22, 28, 0.9)), 
+                          url("https://freepik.com") !important;
+        background-size: cover !important;
+        background-position: center !important;
+        background-attachment: fixed !important;
+    }
+    
+    /* Transparent layered component sheets for high font readability */
+    .block-container {
+        background: rgba(13, 14, 18, 0.75);
+        padding: 2rem 1.5rem !important;
+        border-radius: 16px;
+        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        margin-top: 1rem;
+    }
+
+    /* Input title contrast stabilization adjustments */
+    p, span, label, .stSubheader {
+        color: #e2e7f3 !important;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-weight: 500;
+    }
+    
+    hr {
+        border-color: rgba(255, 255, 255, 0.15) !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.title("🥷 Evony Spawn Generator")
 
 # Flashy Neon Gold Subtitle Style
 st.markdown(
@@ -80,7 +119,7 @@ if x_5 > 0 and y_5 > 0: spawns.append((x_5, y_5))
 st.write("---")
 
 # Calculation Logic
-if st.button("🔥 Calculate Next Target", type="primary"):
+if st.button("🥷 Calculate Next Target", type="primary"):
     x_range = np.arange(max(0, HIVE_X - 200), min(1200, HIVE_X + 200))
     y_range = np.arange(max(0, HIVE_Y - 200), min(1200, HIVE_Y + 200))
     
@@ -91,7 +130,6 @@ if st.button("🔥 Calculate Next Target", type="primary"):
     valid_mask = np.ones_like(X, dtype=bool)
     for sx, sy in spawns:
         dist_to_spawn = np.sqrt((X - sx)**2 + (Y - sy)**2)
-        # Fixed to 140km exclusion radius threshold
         valid_mask &= (dist_to_spawn > 140)
         
     valid_x = X[valid_mask]
