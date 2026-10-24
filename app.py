@@ -6,10 +6,11 @@ import altair as alt
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 
-# Custom Dynamic Ninja Graphic Background Layer
+# Custom Dynamic Ninja Silhouette Graphic Background Layer
 st.markdown(
     """
     <style>
+    /* Injects a custom dark high-contrast ninja silhouette image as a fixed frame background */
     .stApp {
         background-image: linear-gradient(rgba(13, 14, 18, 0.85), rgba(20, 22, 28, 0.9)), 
                           url("https://unsplash.com") !important;
@@ -17,6 +18,8 @@ st.markdown(
         background-position: center !important;
         background-attachment: fixed !important;
     }
+    
+    /* Transparent layered component sheets for high font readability */
     .block-container {
         background: rgba(13, 14, 18, 0.75);
         padding: 2rem 1.5rem !important;
@@ -25,11 +28,14 @@ st.markdown(
         border: 1px solid rgba(255, 255, 255, 0.08);
         margin-top: 1rem;
     }
+
+    /* Input title contrast stabilization adjustments */
     p, span, label, .stSubheader {
         color: #e2e7f3 !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         font-weight: 500;
     }
+    
     hr {
         border-color: rgba(255, 255, 255, 0.15) !important;
     }
@@ -172,63 +178,59 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         min_x, max_x = HIVE_X - 200, HIVE_X + 200
         min_y, max_y = HIVE_Y - 200, HIVE_Y + 200
 
-        # Calculate isometric Visual parameters to lock diamond boundaries securely
-        min_x_iso = min_x - max_y
-        max_x_iso = max_x - min_y
-        min_y_iso = min_x + min_y
-        max_y_iso = max_x + max_y
+        x_ticks = list(range(min_x, max_x + 1, 20))
+        y_ticks = list(range(min_y, max_y + 1, 20))
 
-        # Define dataframes applying the strict X-Y / X+Y vector transformation matrices
-        hive_data = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
-        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
+        x_axis_config = alt.Axis(values=x_ticks, format='d', grid=True)
+        y_axis_config = alt.Axis(values=y_ticks, format='d', grid=True)
+
+        # Isolated clean Dataframes
+        hive_data = pd.DataFrame([{"X": HIVE_X, "Y": HIVE_Y, "Emoji": "🏰"}])
+        target_data = pd.DataFrame([{"X": target_x, "Y": target_y, "Emoji": "🎯"}])
         
-        monster_list = [{"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "Num": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"} for idx, (sx, sy) in enumerate(spawns, 1)]
-        monster_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Num", "Label"])
+        monster_list = [{"X": sx, "Y": sy, "Emoji": "👹", "Num": str(idx)} for idx, (sx, sy) in enumerate(spawns, 1)]
+        monster_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X", "Y", "Emoji", "Num"])
         
         rival_list = []
         for rx, ry in rivals:
             if min_x <= rx <= max_x and min_y <= ry <= max_y:
-                rival_list.append({"X_iso": rx - ry, "Y_iso": rx + ry, "Emoji": "💀", "Label": f"Rival Alliance ({rx},{ry})"})
-        rival_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
+                rival_list.append({"X": rx, "Y": ry, "Emoji": "💀"})
+        rival_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=["X", "Y", "Emoji"])
 
-        # Isometric Grid Setup: reverse=True on the vertical axis forces lower values to point UP
-        x_scale = alt.Scale(domain=[min_x_iso, max_x_iso])
-        y_scale = alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
-
-        # Plot components using the transformed coordinates. Added precise hover tooltips for on-tap reading.
+        # Construct each layer explicitly setting the shared axis config parameters inside the layer itself
         hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(
-            x=alt.X('X_iso:Q', scale=x_scale, axis=None),
-            y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
-            text='Emoji:N', tooltip=['Label:N']
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
         )
 
         target_layer = alt.Chart(target_data).mark_text(size=35).encode(
-            x=alt.X('X_iso:Q', scale=x_scale, axis=None),
-            y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
-            text='Emoji:N', tooltip=['Label:N']
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
         )
 
         monster_layer = alt.Chart(monster_data).mark_text(size=28).encode(
-            x=alt.X('X_iso:Q', scale=x_scale, axis=None),
-            y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
-            text='Emoji:N', tooltip=['Label:N']
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
         )
         
         rival_layer = alt.Chart(rival_data).mark_text(size=28).encode(
-            x=alt.X('X_iso:Q', scale=x_scale, axis=None),
-            y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
-            text='Emoji:N', tooltip=['Label:N']
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
+            text='Emoji:N'
         )
         
         number_layer = alt.Chart(monster_data).mark_text(
             size=16, fontWeight='bold', color='#FFD700', dx=15, dy=-12
         ).encode(
-            x=alt.X('X_iso:Q', scale=x_scale, axis=None),
-            y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
+            x=alt.X('X:Q', scale=alt.Scale(domain=[min_x, max_x]), axis=x_axis_config),
+            y=alt.Y('Y:Q', scale=alt.Scale(domain=[min_y, max_y]), axis=y_axis_config),
             text='Num:N'
         )
 
-        # Merge onto the final radar chart container panel
+        # Merge onto map container panel through straight layer mapping components
         final_map = alt.layer(hive_layer, target_layer, monster_layer, rival_layer, number_layer).properties(
             width=500, height=450
         ).configure_view(strokeOpacity=0)
