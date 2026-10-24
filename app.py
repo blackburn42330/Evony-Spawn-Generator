@@ -4,11 +4,11 @@ import numpy as np
 # Mobile optimization layout
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 
-# Bulletproof Full-Screen Global Styling Layer
+# Global structural bypass override styling
 st.markdown(
     """
     <style>
-    /* 1. Force the absolute bottom layer to contain the master ninja graphic */
+    /* Force absolute placement on the viewport root level */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main, .stApp {
         background-image: linear-gradient(rgba(10, 11, 15, 0.88), rgba(15, 16, 22, 0.94)), 
                           url("https://freepik.com") !important;
@@ -16,25 +16,37 @@ st.markdown(
         background-position: center center !important;
         background-repeat: no-repeat !important;
         background-attachment: fixed !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
-    /* 2. Completely dissolve intermediate blocks so background is visible */
+    /* Disjoint layout container bounds */
     [data-testid="stAppViewContainer"] > section, [data-testid="stMainSpaceHolder"], .stAppViewBlockContainer {
         background: transparent !important;
     }
     
-    /* 3. Sleek, semi-transparent card container so fonts are hyper-clear on mobile */
-    .block-container {
-        background: rgba(13, 14, 18, 0.78) !important;
+    /* Eliminate default web padding frames creating left/right blank margins */
+    .stAppViewMain, .main .block-container {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* Sleek inner form card container overlay */
+    .block-container > div {
+        background: rgba(13, 14, 18, 0.8) !important;
         padding: 2rem 1.5rem !important;
         border-radius: 16px !important;
         box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        margin-top: 1rem !important;
+        margin: 1rem auto !important;
         max-width: 550px !important;
     }
 
-    /* Text contrast safeguards */
+    /* Clear text stabilization layers */
     p, span, label, .stSubheader {
         color: #e2e7f3 !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
