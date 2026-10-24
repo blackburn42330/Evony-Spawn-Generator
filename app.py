@@ -139,6 +139,9 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         hive_data = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
         target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
         
+        # 👑 Server Throne Dataframe Asset Locked at (600, 600)
+        throne_data = pd.DataFrame([{"X_iso": 600 - 600, "Y_iso": 600 + 600, "Emoji": "👑", "Label": "Throne (600,600)"}])
+        
         monster_list = [{"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "TextLabel": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"} for idx, (sx, sy) in enumerate(spawns, 1)]
         
         rival_list = []
@@ -161,6 +164,9 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         target_layer = alt.Chart(target_data).mark_text(size=35).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
         )
+        throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(
+            x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
+        )
         monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
         )
@@ -170,21 +176,20 @@ if st.button("🥷 Calculate Next Target", type="primary"):
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N'
         )
         
-        # 🔴 LAYER A: Light Red Shaded Area Fill
         danger_fill_layer = alt.Chart(danger_ring_data).mark_point(
             size=9500, color='#FF1744', opacity=0.08, filled=True
         ).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None)
         )
         
-        # 🔴 LAYER B: Bold Bright Crimson Boundary Ring Outline
         danger_border_layer = alt.Chart(danger_ring_data).mark_point(
             size=9500, strokeWidth=3.0, color='#FF1744', opacity=0.70, filled=False
         ).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None)
         )
 
-        final_map = alt.layer(danger_fill_layer, danger_border_layer, hive_layer, target_layer, monster_layer, number_layer).properties(width=500, height=450).configure_view(strokeOpacity=0)
+        # Combined layout framework stack with the new Throne layer injected safely
+        final_map = alt.layer(danger_fill_layer, danger_border_layer, hive_layer, target_layer, throne_layer, monster_layer, number_layer).properties(width=500, height=450).configure_view(strokeOpacity=0)
         st.write("### 🥷 Ninja Clan Inc.")
         st.altair_chart(final_map, use_container_width=True)
     else:
