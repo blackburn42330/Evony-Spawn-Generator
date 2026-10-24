@@ -145,9 +145,7 @@ if st.button("🥷 Calculate Next Target", type="primary"):
         for r in rivals:
             rx, ry = r["X"], r["Y"]
             if min_x <= rx <= max_x and min_y <= ry <= max_y:
-                # Add skull icons to list
                 monster_list.append({"X_iso": rx - ry, "Y_iso": rx + ry, "Emoji": "💀", "TextLabel": r["Tag"], "Label": f"{r['Tag']} ({rx},{ry})"})
-                # Separate list for accurate mapping calculations of danger circles
                 rival_list.append({"X_iso": rx - ry, "Y_iso": rx + ry})
                 
         spawn_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "TextLabel", "Label"])
@@ -172,14 +170,21 @@ if st.button("🥷 Calculate Next Target", type="primary"):
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N'
         )
         
-        # 🔴 HIGH-CONTRAST DANGER ZONE LAYER: Thickened bright red boundary line
-        danger_layer = alt.Chart(danger_ring_data).mark_point(
+        # 🔴 LAYER A: Light Red Shaded Area Fill
+        danger_fill_layer = alt.Chart(danger_ring_data).mark_point(
+            size=9500, color='#FF1744', opacity=0.08, filled=True
+        ).encode(
+            x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None)
+        )
+        
+        # 🔴 LAYER B: Bold Bright Crimson Boundary Ring Outline
+        danger_border_layer = alt.Chart(danger_ring_data).mark_point(
             size=9500, strokeWidth=3.0, color='#FF1744', opacity=0.70, filled=False
         ).encode(
             x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None)
         )
 
-        final_map = alt.layer(danger_layer, hive_layer, target_layer, monster_layer, number_layer).properties(width=500, height=450).configure_view(strokeOpacity=0)
+        final_map = alt.layer(danger_fill_layer, danger_border_layer, hive_layer, target_layer, monster_layer, number_layer).properties(width=500, height=450).configure_view(strokeOpacity=0)
         st.write("### 🥷 Ninja Clan Inc.")
         st.altair_chart(final_map, use_container_width=True)
     else:
