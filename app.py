@@ -16,18 +16,22 @@ st.markdown("""
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
     
-    /* 📱 Global overrides to completely force side-by-side rendering on narrow screens */
-    [data-testid="column"] {
-        width: 50% !important;
-        flex: 1 1 50% !important;
-        min-width: 50% !important;
-    }
+    /* 📱 FORCE COLUMNS SIDE-BY-SIDE AND LOCK SMALL WIDTHS */
     [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
+        justify-content: flex-start !important; /* Align inputs to the left instead of stretching */
+        gap: 12px !important;
         width: 100% !important;
     }
+    
+    /* Shrink the column wrapper containers to a comfortable size for 3-4 digit numbers */
+    [data-testid="column"] {
+        flex: 0 1 150px !important; /* Cap the scale growth at a clean 150px wide limit */
+        min-width: 120px !important;
+    }
+    
     div.stTextInput > div > div > input {
         padding: 6px 10px !important;
     }
@@ -57,7 +61,6 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
-# --- Clean Layout Generation Loop ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
         col_a, col_b = st.columns(2)
@@ -88,7 +91,6 @@ if len(spawns) > 0:
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
         
-        # 🟢 Success block message updated to text description constraints
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
         st.write("**Spawn Distances from Hive:**")
