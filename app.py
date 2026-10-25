@@ -6,6 +6,7 @@ import altair as alt
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 st.title("🥷 Evony Spawn Generator")
 
+# Minimal, clean design adjustments without structural style injections
 st.markdown("""
     <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
     <style>
@@ -44,7 +45,8 @@ def get_coord(val_string):
 # --- Native Responsive Layout Generation ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        col_a, col_b = st.columns([1, 1], gap="small")
+        # 🛠️ Fixed: Creates 4 columns. 2 for the inputs, and 2 large empty spacer columns on the right to shrink the boxes.
+        col_a, col_b, spacer_1, spacer_2 = st.columns([2, 2, 3, 3], gap="small")
         with col_a: x_in = st.text_input(f"Spawn {i} X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...")
         with col_b: y_in = st.text_input(f"Spawn {i} Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...")
         x_val, y_val = get_coord(x_in), get_coord(y_in)
