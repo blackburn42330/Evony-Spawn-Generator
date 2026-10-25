@@ -105,8 +105,8 @@ for i in range(1, 6):
             spawns.append((int(x_s), int(y_s)))
     except ValueError: pass
 
-# 🛠️ Fixed: target_data is now initialized with explicit empty tracking column fields
-target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
+target_x, target_y, true_dist = None, None, None
+target_list = []
 rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
 
 if len(spawns) > 0:
@@ -123,7 +123,7 @@ if len(spawns) > 0:
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         st.write("**Spawn Distances from Hive:**")
         st.write(" | ".join([f"**Spawn {idx}:** {int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]))
-        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
+        target_list.append({"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"})
     else: st.error("❌ No valid spawning coordinates found.")
 
 hive_df = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
@@ -135,23 +135,26 @@ temple_df = pd.DataFrame([
 ])
 
 m_list, r_list = [], []
-for idx, (sx, sy) in enumerate(spawns, 1): m_list.append({"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "Lbl": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"})
+for idx, (sx, sy) in enumerate(spawns, 1): 
+    m_list.append({"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "Lbl": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"})
 for r in rivals:
     m_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Emoji": "💀", "Lbl": r["Tag"], "Label": f"{r['Tag']} ({r['X']},{r['Y']})"})
     r_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Label": f"{r['Tag']} Danger (200km)"})
 
 sp_df = pd.DataFrame(m_list) if m_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Lbl", "Label"])
-danger_data = pd.DataFrame(r_list) if r_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Label"])
+danger_df = pd.DataFrame(r_list) if r_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Label"])
+target_data = pd.DataFrame(target_list) if target_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
 
 x_sc, y_scale = alt.Scale(domain=[-780, 620]), alt.Scale(domain=[-420, 1780], reverse=True)
-def mk_lyr(df, txt, sz, dx=0, dy=0, c=None, st_c=None, sw=0):
-    o = alt.Chart(df).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N'])
-    if c and st_c: return o.mark_point(color=c, stroke=st_c, strokeWidth=sw, filled=True, size=16500)
-    return o.mark_text(size=sz, dx=dx, dy=dy, fontWeight='bold', color='white' if not txt=='Emoji' else None).encode(text=f'{txt}:N')
 
-l_dg = mk_lyr(danger_data, '', 0, c='rgba(255,0,0,0.12)', st_c='#8B0000', sw=2)
-l_hv, l_th, l_tm, l_tg = mk_lyr(hive_df, 'Emoji', 35), mk_lyr(throne_df, 'Emoji', 38), mk_lyr(temple_df, 'Emoji', 32), mk_lyr(target_data, 'Emoji', 35)
-l_me, l_mt = mk_lyr(sp_df, 'Emoji', 28), mk_lyr(sp_df, 'Lbl', 14, dx=22, dy=-10)
+# 🗺️ Clean, concrete layers mapped individually to ensure zero translation script parsing crashes
+l_dg = alt.Chart(danger_df).mark_point(color='rgba(255,0,0,0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip='Label:N')
+l_hv = alt.Chart(hive_df).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip='Label:N')
+l_th = alt.Chart(throne_df).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip='Label:N')
+l_tm = alt.Chart(temple_df).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip='Label:N')
+l_tg = alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip='Label:N')
+l_me = alt.Chart(sp_df).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip='Label:N')
+l_mt = alt.Chart(sp_df).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Lbl:N', tooltip='Label:N')
 
 chart = alt.layer(l_dg, l_th, l_tm, l_hv, l_tg, l_me, l_mt).properties(width=700, height=500, background='rgba(0,0,0,0)').configure_view(strokeOpacity=0)
 st.altair_chart(chart, use_container_width=True)
