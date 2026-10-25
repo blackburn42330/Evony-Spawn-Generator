@@ -16,17 +16,20 @@ st.markdown("""
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
     
-    /* 📱 Force Streamlit columns to never collapse on phone layouts */
+    /* 🎯 TARGET ONLY SPWN ROW CONTAINERS TO LOCK THEM CLOSE TOGETHER */
     div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        justify-content: flex-start !important;
-        gap: 10px !important;
+        justify-content: flex-start !important; /* Left-align fields instead of stretching */
+        column-gap: 12px !important;            /* Tightens the space between X and Y fields */
+        width: 100% !important;
     }
-    div[data-testid="column"] {
-        flex: 0 1 130px !important;
-        min-width: 90px !important;
+    
+    /* Lock the exact width of the column boxes so they match 3-4 digit coordinate text sizes */
+    div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+        flex: 0 0 140px !important;  /* Locks width strictly at 140px maximum */
+        min-width: 100px !important; /* Retains tap accessibility layout limits */
     }
     </style>
 """, unsafe_allow_html=True)
