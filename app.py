@@ -126,6 +126,13 @@ if len(spawns) > 0:
     else:
         st.error("❌ No valid spawning coordinates found with the current constraints.")
 
+# 📊 SIDEBAR SUMMARY LOGIC (Fills up the blank right space on desktop/tablets)
+if len(spawns) > 0:
+    st.sidebar.markdown("### 🗺️ Spawn Distances")
+    for idx, (sx, sy) in enumerate(spawns, 1):
+        s_dist = int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))
+        st.sidebar.markdown(f"👹 **Spawn {idx}:** `{s_dist} km` from Hive")
+
 CENTER_X, CENTER_Y = 520, 600
 min_x, max_x = CENTER_X - 350, CENTER_X + 350
 min_y, max_y = CENTER_Y - 350, CENTER_Y + 350
@@ -154,13 +161,12 @@ danger_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=[
 x_scale = alt.Scale(domain=[min_x_iso, max_x_iso])
 y_scale = alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
 
-# 🔴 Danger zones with transparent red fill AND a dark red border outline
 danger_zone_layer = alt.Chart(danger_data).mark_point(
-    color='rgba(255, 0, 0, 0.12)', # Soft light red filling
-    stroke='#8B0000',               # Bold dark red border color
-    strokeWidth=2,                 # Clear border outline width
+    color='rgba(255, 0, 0, 0.12)', 
+    stroke='#8B0000',               
+    strokeWidth=2,                 
     filled=True, 
-    size=16500                      # Visual diameter scaled to 200km parameters
+    size=16500                      
 ).encode(
     x=alt.X('X_iso:Q', scale=x_scale, axis=None),
     y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
