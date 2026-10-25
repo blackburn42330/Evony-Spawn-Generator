@@ -2,11 +2,11 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import altair as alt
+import streamlit.components.v1 as cmps
 
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 st.title("🥷 Evony Spawn Generator")
 
-# Minimal, clean design adjustments without structural style injections
 st.markdown("""
     <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
     <style>
@@ -20,37 +20,86 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.")
-st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the fields side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
+st.markdown("### 📋 Instructions:\n1. Enter your coordinates into the side-by-side boxes below.\n2. Tap anywhere outside the fields or press enter to trigger calculations instantly!\n3. The app will automatically calculate your safe location to teleport to as you type!")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
+
+# Baseline dynamic state tracking parameters initialization
+for i in range(1, 6):
+    if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
+    if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
 
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6): st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
     st.rerun()
 
 st.subheader("📍 Active Spawns")
+
+rows_html = ""
 for i in range(1, 6):
-    if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
-    if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
+    is_hidden = "hidden" if i > 1 and not (st.session_state[f'x_{i-1}'] and st.session_state[f'y_{i-1}']) else ""
+    rows_html += f"""
+    <div class="spawn-row {is_hidden}" id="row_{i}">
+        <div class="label">Spawn {i}</div>
+        <input type="number" class="input-box" id="x_{i}" placeholder="X..." value="{st.session_state[f'x_{i}']}" onchange="updateData({i})">
+        <input type="number" class="input-box" id="y_{i}" placeholder="Y..." value="{st.session_state[f'y_{i}']}" onchange="updateData({i})">
+    </div>"""
+
+widget_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    html, body {{ font-family: sans-serif; background-color: transparent; color: white; margin: 0; padding: 0; }}
+    .spawn-row {{ display: flex; align-items: center; margin-bottom: 12px; }}
+    .label {{ width: 75px; font-weight: bold; font-size: 14px; color: #E0E0E0; }}
+    .input-box {{ width: 85px; padding: 8px 10px; background: #1E293B; border: 1px solid #475569; border-radius: 6px; color: white; font-size: 15px; margin-right: 10px; outline: none; }}
+    .input-box:focus {{ border-color: #FFD700; box-shadow: 0 0 5px rgba(255,215,0,0.3); }}
+    .hidden {{ display: none !important; }}
+</style>
+</head>
+<body>
+    {rows_html}
+    <script>
+    function updateData(rowId) {{
+        var xVal = document.getElementById('x_' + rowId).value;
+        var yVal = document.getElementById('y_' + rowId).value;
+        if(xVal && yVal && rowId < 5) {{
+            var nextRow = document.getElementById('row_' + (rowId + 1));
+            if(nextRow) nextRow.classList.remove('hidden');
+        }}
+        // Instantly transmits coordinate data objects up to the main Python layout engine
+        Streamlit.setComponentValue({{row: rowId, x: xVal, y: yVal}});
+    }}
+    </script>
+</body>
+</html>"""
+
+# Render shrunken input fields layer matching the visual aspect ratios of your photo mockup
+response = cmps.html(widget_html, height=185, scrolling=False)
+
+# Intercept row variables and update global tracking states instantly
+if response and isinstance(response, dict):
+    r = response.get('row')
+    st.session_state[f"x_{r}"] = response.get('x', "")
+    st.session_state[f"y_{r}"] = response.get('y', "")
+    st.rerun()
 
 spawns = []
 def get_coord(val_string):
     try:
-        val = int(val_string.strip())
-        if 0 <= val <= 1200: return val
+        if val_string and str(val_string).strip():
+            val = int(str(val_string).strip())
+            if 0 <= val <= 1200: return val
     except ValueError: pass
     return None
 
-# --- Native Responsive Layout Generation ---
 for i in range(1, 6):
-    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        # 🛠️ Fixed: Explicit sizing weights make X and Y narrow and push empty space to a third spacer column on the right
-        col_a, col_b, spacer = st.columns([1, 1, 3], gap="small")
-        with col_a: x_in = st.text_input(f"Spawn {i} X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...")
-        with col_b: y_in = st.text_input(f"Spawn {i} Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...")
-        x_val, y_val = get_coord(x_in), get_coord(y_in)
-        if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
+    x_val = get_coord(st.session_state[f"x_{i}"])
+    y_val = get_coord(st.session_state[f"y_{i}"])
+    if x_val is not None and y_val is not None:
+        spawns.append((x_val, y_val))
 
 st.write("---")
 target_x, target_y, true_dist = None, None, None
