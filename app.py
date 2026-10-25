@@ -16,24 +16,17 @@ st.markdown("""
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
     
-    /* 📱 FORCE COLUMNS SIDE-BY-SIDE AND LOCK SMALL WIDTHS */
-    [data-testid="stHorizontalBlock"] {
+    /* 📱 Force Streamlit columns to never collapse on phone layouts */
+    div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        justify-content: flex-start !important; /* Align inputs to the left instead of stretching */
-        gap: 12px !important;
-        width: 100% !important;
+        justify-content: flex-start !important;
+        gap: 10px !important;
     }
-    
-    /* Shrink the column wrapper containers to a comfortable size for 3-4 digit numbers */
-    [data-testid="column"] {
-        flex: 0 1 150px !important; /* Cap the scale growth at a clean 150px wide limit */
-        min-width: 120px !important;
-    }
-    
-    div.stTextInput > div > div > input {
-        padding: 6px 10px !important;
+    div[data-testid="column"] {
+        flex: 0 1 130px !important;
+        min-width: 90px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -61,6 +54,7 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
+# --- Clean Layout Generation Loop ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
         col_a, col_b = st.columns(2)
