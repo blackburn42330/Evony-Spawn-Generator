@@ -8,24 +8,61 @@ st.title("🏰 Evony Alliance Boundary Overlaps")
 
 st.markdown("""
     <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
+    <style>
+    /* Force specific coordinate block columns to stay locked horizontally closely together on mobile */
+    div[data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+    }
+    div[data-testid="column"] {
+        flex: 0 0 auto !important;
+        width: auto !important;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
-st.write("Visualizes all major alliance hives using a custom territory radius bubble. Overlapping control regions are dynamically flagged in red shade zones.")
+st.write("Visualizes major alliance hives using a custom territory radius bubble. Overlapping control regions are dynamically flagged in red shade zones.")
 
 # --- Real-time Interactive Input Grid ---
 st.subheader("⚙️ Map Settings")
-# Forces a shrunken side-by-side arrangement natively on mobile phones and tablets
-col_input, col_spacer = st.columns([2, 3], gap="small")
+col_input, col_spacer = st.columns([2, 2], gap="small")
 with col_input:
     radius = st.number_input("Territory Bubble Radius (km)", min_value=10, max_value=500, value=175, step=5, help="Adjust to scale territory sizes dynamically")
 
-# Alliance dataset with updated NCI tag and text label tracking strings
-alliances = [
-    {"X": 356, "Y": 721, "Tag": "NCI"},
-    {"X": 319, "Y": 481, "Tag": "TDK"},
-    {"X": 611, "Y": 551, "Tag": "CoG"},
-    {"X": 673, "Y": 771, "Tag": "NFM"}
+st.write("---")
+st.subheader("📍 Alliance Hive Coordinates")
+
+# Baseline dynamic state tracking initializations for the 4 alliance positions
+default_alliances = [
+    {"Tag": "NCI", "X": 356, "Y": 721},
+    {"Tag": "TDK", "X": 319, "Y": 481},
+    {"Tag": "CoG", "X": 611, "Y": 551},
+    {"Tag": "NFM", "X": 673, "Y": 771}
 ]
+
+alliances = []
+
+# --- Side-by-Side Mobile Input Grid Loop ---
+for a in default_alliances:
+    tag = a["Tag"]
+    if f"map_x_{tag}" not in st.session_state: st.session_state[f"map_x_{tag}"] = a["X"]
+    if f"map_y_{tag}" not in st.session_state: st.session_state[f"map_y_{tag}"] = a["Y"]
+    
+    col_lbl, col_x, col_y = st.columns([1.2, 1.5, 1.5], gap="small")
+    with col_lbl:
+        st.markdown(f"<div style='padding-top: 6px; font-weight: bold; font-size:15px; white-space: nowrap;'>[{tag}] Hive</div>", unsafe_allow_html=True)
+    with col_x:
+        x_val = st.number_input(f"{tag}_X", min_value=0, max_value=1200, step=1, value=st.session_state[f"map_x_{tag}"], key=f"map_x_{tag}", label_visibility="collapsed", placeholder="X...")
+    with col_y:
+        y_val = st.number_input(f"{tag}_Y", min_value=0, max_value=1200, step=1, value=st.session_state[f"map_y_{tag}"], key=f"map_y_{tag}", label_visibility="collapsed", placeholder="Y...")
+    
+    # Store active tuning metrics safely
+    alliances.append({"X": int(x_val), "Y": int(y_val), "Tag": tag})
+
+st.write("---")
 
 # Coordinate bounds configuration
 CENTER_X, CENTER_Y = 520, 600
@@ -48,7 +85,7 @@ y_grid = np.linspace(min_y, max_y, 180)
 X, Y = np.meshgrid(x_grid, y_grid)
 X, Y = X.flatten(), Y.flatten()
 
-# Counts overlap matrices matching the user-defined slider/number inputs parameters
+# Counts overlap matrices matching the user-defined adjustments
 coverage_count = np.zeros_like(X, dtype=int)
 for a in alliances:
     dist = np.sqrt((X - a["X"])**2 + (Y - a["Y"])**2)
@@ -70,7 +107,7 @@ castle_df = pd.DataFrame([{"X_iso": a["X"] - a["Y"], "Y_iso": a["X"] + a["Y"], "
 x_scale = alt.Scale(domain=[min_x_iso, max_x_iso])
 y_scale = alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
 
-# 🗺️ Stitch all visual chart layers together
+# 🗺 Tangible map canvas elements assembly
 blue_bubble_layer = alt.Chart(bubble_df).mark_square(color='rgba(30, 144, 255, 0.15)', size=18).encode(
     x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None)
 )
@@ -87,17 +124,14 @@ temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(
     x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
 )
 
-# 🏰 Castle icons layer
 castle_layer = alt.Chart(castle_df).mark_text(size=35).encode(
     x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']
 )
 
-# 🏷️ Alliance tag text layer offsets text labels clearly to the top right of the castles
 tag_layer = alt.Chart(castle_df).mark_text(size=14, fontWeight='bold', color='white', dx=24, dy=-12).encode(
     x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Tag:N', tooltip=['Label:N']
 )
 
-# Compile mapping layout stack
 chart = alt.layer(blue_bubble_layer, red_overlap_layer, throne_layer, temple_layer, castle_layer, tag_layer).properties(
     width=700, height=500, background='rgba(0,0,0,0)'
 ).configure_view(strokeOpacity=0)
