@@ -41,15 +41,26 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
-# --- Clean Native 1:1 Side-by-Side Column Loop ---
+# --- Shrunken Side-by-Side Mobile Input Grid ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        st.write(f"**Spawn {i}**")
-        col_a, col_b = st.columns([1, 1], gap="small")
-        with col_a: x_in = st.text_input("X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="Type X...")
-        with col_b: y_in = st.text_input("Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Type Y...")
+        # Uses explicit fractional spacing ratios to force fields side-by-side natively on mobile phone screens
+        col_lbl, col_x, col_y = st.columns([1.5, 2, 2], gap="small")
+        
+        with col_lbl:
+            # Clean layout spacer label aligned with the fields
+            st.markdown(f"<div style='padding-top: 8px; font-weight: bold;'>Spawn {i}</div>", unsafe_allow_html=True)
+            
+        with col_x:
+            # Collapsing labels prevents Streamlit from stacking fields vertically on phone views
+            x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...", label_visibility="collapsed")
+            
+        with col_y:
+            y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...", label_visibility="collapsed")
+            
         x_val, y_val = get_coord(x_in), get_coord(y_in)
-        if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
+        if x_val is not None and y_val is not None: 
+            spawns.append((x_val, y_val))
 
 st.write("---")
 target_x, target_y, true_dist = None, None, None
@@ -89,7 +100,7 @@ CENTER_X, CENTER_Y = 520, 600
 min_x, max_x = CENTER_X - 350, CENTER_X + 350
 min_y, max_y = CENTER_Y - 350, CENTER_Y + 350
 min_x_iso, max_x_iso = min_x - max_y, max_x - min_y
-min_y_iso, max_y_iso = min_x + min_y, max_x + max_y
+max_y_iso = min_x + min_y, max_x + max_y
 
 hive_data = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
 throne_data = pd.DataFrame([{"X_iso": 600 - 600, "Y_iso": 600 + 600, "Emoji": "👑", "Label": "Throne (600,600)"}])
