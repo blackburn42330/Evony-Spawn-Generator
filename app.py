@@ -15,6 +15,10 @@ st.markdown("""
         background-color: rgba(255, 215, 0, 0.05) !important; width: 100% !important; margin: 10px 0 15px 0 !important;
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
+    
+    /* 📉 Custom styling rule to make spawn metrics smaller and tightly packed on mobile screens */
+    [data-testid="stMetricValue"] { font-size: 20px !important; }
+    [data-testid="stMetricLabel"] { font-size: 13px !important; font-weight: 500 !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -41,7 +45,6 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
-# --- Highly Compressed Input Field Chain Loop ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
         col_a, col_b = st.columns(2)
@@ -72,14 +75,15 @@ if len(spawns) > 0:
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
         
-        st.success(f"🎯 **Port here and continue spawning:** X: {target_x}, Y: {target_y}")
+        # 🟢 Combined coordinates and distance inside the green alert box
+        st.success(f"🎯 **Port here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 📊 Dynamic side-by-side metric tiles matching target display styling
-        metric_cols = st.columns(1 + len(spawns))
-        with metric_cols[0]: st.metric(label="Distance from Hive", value=f"{true_dist} km")
-        for idx, (sx, sy) in enumerate(spawns, 1):
-            s_dist = int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))
-            with metric_cols[idx]: st.metric(label=f"Spawn {idx} from Hive", value=f"{s_dist} km")
+        # 📊 Clean grid containing only the downsized spawn trackers
+        if len(spawns) > 0:
+            metric_cols = st.columns(len(spawns))
+            for idx, (sx, sy) in enumerate(spawns, 1):
+                s_dist = int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))
+                with metric_cols[idx-1]: st.metric(label=f"Spawn {idx} from Hive", value=f"{s_dist} km")
                 
         target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
     else: st.error("❌ No valid spawning coordinates found with the current constraints.")
