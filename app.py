@@ -53,7 +53,8 @@ widget_html = f"""
 <html>
 <head>
 <style>
-    body {{ font-family: sans-serif; background-color: transparent; color: white; margin: 0; padding: 0; }}
+    html, body {{ height: 100%; width: 100%; font-family: sans-serif; background-color: transparent; color: white; margin: 0; padding: 0; }}
+    .container {{ height: 100%; width: 100%; }}
     .spawn-row {{ display: flex; align-items: center; margin-bottom: 12px; }}
     .label {{ width: 75px; font-weight: bold; font-size: 14px; color: #E0E0E0; }}
     .input-box {{ width: 85px; padding: 8px 10px; background: #1E293B; border: 1px solid #475569; border-radius: 6px; color: white; font-size: 15px; margin-right: 10px; outline: none; }}
@@ -62,7 +63,9 @@ widget_html = f"""
 </style>
 </head>
 <body>
-    {rows_html}
+    <div class="container" id="bg_container">
+        {rows_html}
+    </div>
     <script>
     function updateData(rowId) {{
         var x = document.getElementById('x_' + rowId).value;
@@ -73,6 +76,16 @@ widget_html = f"""
         }}
         window.parent.postMessage({{type: 'streamlit:setComponentValue', value: {{key: 'sp_up', row: rowId, x: x, y: y}}}}, '*');
     }}
+    
+    // Forces input boxes to blur and update if a user taps anywhere outside the text fields
+    document.getElementById('bg_container').addEventListener('click', function(e) {{
+        if (e.target.tagName !== 'INPUT') {{
+            var inputs = document.getElementsByTagName('input');
+            for (var i = 0; i < inputs.length; i++) {{
+                inputs[i].blur();
+            }}
+        }}
+    }});
     </script>
 </body>
 </html>"""
@@ -128,7 +141,8 @@ for r in rivals:
 sp_df = pd.DataFrame(m_list) if m_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Lbl"])
 dg_df = pd.DataFrame(r_list) if r_list else pd.DataFrame(columns=["X_iso", "Y_iso"])
 
-x_sc, y_scale = alt.Scale(domain=[-430, 270]), alt.Scale(domain=[450, 1150], reverse=True)
+# 🗺️ Fixed map scale constraints to resolve chart schema validation error
+x_sc, y_scale = alt.Scale(domain=[-780, 620]), alt.Scale(domain=[420, 1820], reverse=True)
 def mk_lyr(df, txt, sz, dx=0, dy=0, c=None, st_c=None, sw=0):
     o = alt.Chart(df).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None))
     if c and st_c: return o.mark_point(color=c, stroke=st_c, strokeWidth=sw, filled=True, size=16500)
