@@ -105,7 +105,7 @@ for i in range(1, 6):
             spawns.append((int(x_s), int(y_s)))
     except ValueError: pass
 
-target_x, target_y, true_dist = None, None, None
+# 🛠️ Fixed: target_data is now initialized with explicit empty tracking column fields
 target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
 rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
 
@@ -141,16 +141,15 @@ for r in rivals:
     r_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Label": f"{r['Tag']} Danger (200km)"})
 
 sp_df = pd.DataFrame(m_list) if m_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Lbl", "Label"])
-dg_df = pd.DataFrame(r_list) if r_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Label"])
+danger_data = pd.DataFrame(r_list) if r_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Label"])
 
-# 🗺️ Fixed map scale domains perfectly to resolve schema validation issues completely
 x_sc, y_scale = alt.Scale(domain=[-780, 620]), alt.Scale(domain=[-420, 1780], reverse=True)
 def mk_lyr(df, txt, sz, dx=0, dy=0, c=None, st_c=None, sw=0):
     o = alt.Chart(df).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N'])
     if c and st_c: return o.mark_point(color=c, stroke=st_c, strokeWidth=sw, filled=True, size=16500)
     return o.mark_text(size=sz, dx=dx, dy=dy, fontWeight='bold', color='white' if not txt=='Emoji' else None).encode(text=f'{txt}:N')
 
-l_dg = mk_lyr(dg_df, '', 0, c='rgba(255,0,0,0.12)', st_c='#8B0000', sw=2)
+l_dg = mk_lyr(danger_data, '', 0, c='rgba(255,0,0,0.12)', st_c='#8B0000', sw=2)
 l_hv, l_th, l_tm, l_tg = mk_lyr(hive_df, 'Emoji', 35), mk_lyr(throne_df, 'Emoji', 38), mk_lyr(temple_df, 'Emoji', 32), mk_lyr(target_data, 'Emoji', 35)
 l_me, l_mt = mk_lyr(sp_df, 'Emoji', 28), mk_lyr(sp_df, 'Lbl', 14, dx=22, dy=-10)
 
