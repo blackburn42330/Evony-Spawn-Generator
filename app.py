@@ -6,6 +6,7 @@ import altair as alt
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 st.title("🥷 Evony Spawn Generator")
 
+# Minimal, clean design adjustments without structural style injections
 st.markdown("""
     <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
     <style>
@@ -19,7 +20,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.")
-st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the new box that appears side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
+st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the fields side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -41,12 +42,13 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
-# --- Highly Compressed Input Field Chain Loop ---
+# --- Native Responsive Layout Generation ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        col_a, col_b = st.columns(2)
-        with col_a: x_in = st.text_input(f"Spawn {i} X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="Type X...")
-        with col_b: y_in = st.text_input(f"Spawn {i} Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Type Y...")
+        # Uses explicit structural sizing arrays to keep elements side-by-side natively
+        col_a, col_b = st.columns([1, 1], gap="small")
+        with col_a: x_in = st.text_input(f"Spawn {i} X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...")
+        with col_b: y_in = st.text_input(f"Spawn {i} Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...")
         x_val, y_val = get_coord(x_in), get_coord(y_in)
         if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
 
@@ -72,14 +74,14 @@ if len(spawns) > 0:
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
         
-        st.success(f"🎯 **Port here and continue spawning:** X: {target_x}, Y: {target_y}")
+        st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 📊 Dynamic side-by-side metric tiles matching target display styling
-        metric_cols = st.columns(1 + len(spawns))
-        with metric_cols[0]: st.metric(label="Distance from Hive", value=f"{true_dist} km")
+        st.write("**Spawn Distances from Hive:**")
+        dist_strings = []
         for idx, (sx, sy) in enumerate(spawns, 1):
             s_dist = int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))
-            with metric_cols[idx]: st.metric(label=f"Spawn {idx} from Hive", value=f"{s_dist} km")
+            dist_strings.append(f"**Spawn {idx}:** {s_dist} km")
+        st.write(" | ".join(dist_strings))
                 
         target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
     else: st.error("❌ No valid spawning coordinates found with the current constraints.")
