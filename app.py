@@ -93,17 +93,22 @@ response = cmps.html(widget_html, height=185, scrolling=False)
 
 if response and isinstance(response, dict) and response.get('key') == 'sp_up':
     r, x_v, y_v = response.get('row'), response.get('x'), response.get('y')
-    st.session_state[f"x_{r}"], st.session_state[f"y_{r}"] = x_v, y_v
-    st.query_params[f"x_{r}"], st.query_params[f"y_{r}"] = x_v, y_v
+    st.session_state[f"x_{r}"], st.session_state[f"y_{r}"] = str(x_v), str(y_v)
+    st.query_params[f"x_{r}"], st.query_params[f"y_{r}"] = str(x_v), str(y_v)
     st.rerun()
 
 spawns = []
 for i in range(1, 6):
     try:
-        x_s, y_s = str(st.session_state[f"x_{i}"]).strip(), str(st.session_state[f"y_{i}"]).strip()
-        if x_s and y_s and 0 <= int(x_s) <= 1200 and 0 <= int(y_s) <= 1200:
-            spawns.append((int(x_s), int(y_s)))
-    except ValueError: pass
+        x_s = str(st.session_state[f"x_{i}"]).strip()
+        y_s = str(st.session_state[f"y_{i}"]).strip()
+        if x_s and y_s:
+            # Robust parsing strategy: handle strings containing decimals cleanly
+            x_val = int(round(float(x_s)))
+            y_val = int(round(float(y_s)))
+            if 0 <= x_val <= 1200 and 0 <= y_val <= 1200:
+                spawns.append((x_val, y_val))
+    except (ValueError, TypeError): pass
 
 target_x, target_y, true_dist = None, None, None
 target_list = []
@@ -147,7 +152,6 @@ target_data = pd.DataFrame(target_list) if target_list else pd.DataFrame(columns
 
 x_sc, y_scale = alt.Scale(domain=[-780, 620]), alt.Scale(domain=[-420, 1780], reverse=True)
 
-# 🗺️ Clean, concrete layers mapped individually to ensure zero translation script parsing crashes
 l_dg = alt.Chart(danger_df).mark_point(color='rgba(255,0,0,0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip='Label:N')
 l_hv = alt.Chart(hive_df).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip='Label:N')
 l_th = alt.Chart(throne_df).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip='Label:N')
