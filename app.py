@@ -142,7 +142,6 @@ temple_data = pd.DataFrame([
 
 monster_list = [{"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "TextLabel": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"} for idx, (sx, sy) in enumerate(spawns, 1)]
 
-# 🚨 Build clean rival lists and distinct danger data points
 rival_list = []
 for r in rivals:
     if min_x <= r["X"] <= max_x and min_y <= r["Y"] <= max_y:
@@ -155,12 +154,13 @@ danger_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=[
 x_scale = alt.Scale(domain=[min_x_iso, max_x_iso])
 y_scale = alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
 
-# 🔴 Fixed stable point circle marker layer for the 200km zones
+# 🔴 Danger zones with transparent red fill AND a dark red border outline
 danger_zone_layer = alt.Chart(danger_data).mark_point(
-    color='red', 
-    opacity=0.2, 
+    color='rgba(255, 0, 0, 0.12)', # Soft light red filling
+    stroke='#8B0000',               # Bold dark red border color
+    strokeWidth=2,                 # Clear border outline width
     filled=True, 
-    size=16500  # Matches the scale equivalent of a 200km circle radius visually
+    size=16500                      # Visual diameter scaled to 200km parameters
 ).encode(
     x=alt.X('X_iso:Q', scale=x_scale, axis=None),
     y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
