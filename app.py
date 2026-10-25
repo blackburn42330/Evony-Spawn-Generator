@@ -16,20 +16,18 @@ st.markdown("""
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
     
-    /* 🎯 TARGET ONLY SPWN ROW CONTAINERS TO LOCK THEM CLOSE TOGETHER */
     div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        justify-content: flex-start !important; /* Left-align fields instead of stretching */
-        column-gap: 12px !important;            /* Tightens the space between X and Y fields */
+        justify-content: flex-start !important;
+        column-gap: 12px !important;
         width: 100% !important;
     }
     
-    /* Lock the exact width of the column boxes so they match 3-4 digit coordinate text sizes */
     div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-        flex: 0 0 140px !important;  /* Locks width strictly at 140px maximum */
-        min-width: 100px !important; /* Retains tap accessibility layout limits */
+        flex: 0 0 140px !important;
+        min-width: 100px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -57,7 +55,6 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
-# --- Clean Layout Generation Loop ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
         col_a, col_b = st.columns(2)
