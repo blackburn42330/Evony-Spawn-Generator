@@ -18,10 +18,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🔄 Radius Description updated to 150km
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.")
-
-st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below (do NOT enter your own hive coordinates).\n2. Type the coordinates of your **next spawn** into the new box that appears side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
+st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the new box that appears side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -43,64 +41,18 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
-# --- Spawn 1 Row ---
-col1_a, col1_b = st.columns(2)
-with col1_a:
-    x_in_1 = st.text_input("Spawn 1 X", value=st.session_state["x_1"], key="x_1", placeholder="Type X...")
-with col1_b:
-    y_in_1 = st.text_input("Spawn 1 Y", value=st.session_state["y_1"], key="y_1", placeholder="Type Y...")
-x_1, y_1 = get_coord(x_in_1), get_coord(y_in_1)
-
-if x_1 is not None and y_1 is not None:
-    spawns.append((x_1, y_1))
-    
-    # --- Spawn 2 Row ---
-    col2_a, col2_b = st.columns(2)
-    with col2_a:
-        x_in_2 = st.text_input("Spawn 2 X", value=st.session_state["x_2"], key="x_2", placeholder="Type X...")
-    with col2_b:
-        y_in_2 = st.text_input("Spawn 2 Y", value=st.session_state["y_2"], key="y_2", placeholder="Type Y...")
-    x_2, y_2 = get_coord(x_in_2), get_coord(y_in_2)
-    
-    if x_2 is not None and y_2 is not None:
-        spawns.append((x_2, y_2))
-        
-        # --- Spawn 3 Row ---
-        col3_a, col3_b = st.columns(2)
-        with col3_a:
-            x_in_3 = st.text_input("Spawn 3 X", value=st.session_state["x_3"], key="x_3", placeholder="Type X...")
-        with col3_b:
-            y_in_3 = st.text_input("Spawn 3 Y", value=st.session_state["y_3"], key="y_3", placeholder="Type Y...")
-        x_3, y_3 = get_coord(x_in_3), get_coord(y_in_3)
-        
-        if x_3 is not None and y_3 is not None:
-            spawns.append((x_3, y_3))
-            
-            # --- Spawn 4 Row ---
-            col4_a, col4_b = st.columns(2)
-            with col4_a:
-                x_in_4 = st.text_input("Spawn 4 X", value=st.session_state["x_4"], key="x_4", placeholder="Type X...")
-            with col4_b:
-                y_in_4 = st.text_input("Spawn 4 Y", value=st.session_state["y_4"], key="y_4", placeholder="Type Y...")
-            x_4, y_4 = get_coord(x_in_4), get_coord(y_in_4)
-            
-            if x_4 is not None and y_4 is not None:
-                spawns.append((x_4, y_4))
-                
-                # --- Spawn 5 Row ---
-                col5_a, col5_b = st.columns(2)
-                with col5_a:
-                    x_in_5 = st.text_input("Spawn 5 X", value=st.session_state["x_5"], key="x_5", placeholder="Type X...")
-                with col5_b:
-                    y_in_5 = st.text_input("Spawn 5 Y", value=st.session_state["y_5"], key="y_5", placeholder="Type Y...")
-                x_5, y_5 = get_coord(x_in_5), get_coord(y_in_5)
-                if x_5 is not None and y_5 is not None: spawns.append((x_5, y_5))
+# --- Highly Compressed Input Field Chain Loop ---
+for i in range(1, 6):
+    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
+        col_a, col_b = st.columns(2)
+        with col_a: x_in = st.text_input(f"Spawn {i} X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="Type X...")
+        with col_b: y_in = st.text_input(f"Spawn {i} Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Type Y...")
+        x_val, y_val = get_coord(x_in), get_coord(y_in)
+        if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
 
 st.write("---")
-
 target_x, target_y, true_dist = None, None, None
 target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
-
 rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
 
 if len(spawns) > 0:
@@ -121,17 +73,16 @@ if len(spawns) > 0:
         true_dist = int(round(dist_to_hive[closest_idx]))
         
         st.success(f"🎯 **Port here and continue spawning:** X: {target_x}, Y: {target_y}")
-        st.metric(label="Distance from Hive", value=f"{true_dist} km")
+        
+        # 📊 Dynamic side-by-side metric tiles matching target display styling
+        metric_cols = st.columns(1 + len(spawns))
+        with metric_cols[0]: st.metric(label="Distance from Hive", value=f"{true_dist} km")
+        for idx, (sx, sy) in enumerate(spawns, 1):
+            s_dist = int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))
+            with metric_cols[idx]: st.metric(label=f"Spawn {idx} from Hive", value=f"{s_dist} km")
+                
         target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
-    else:
-        st.error("❌ No valid spawning coordinates found with the current constraints.")
-
-# 📊 SIDEBAR SUMMARY LOGIC (Fills up the blank right space on desktop/tablets)
-if len(spawns) > 0:
-    st.sidebar.markdown("### 🗺️ Spawn Distances")
-    for idx, (sx, sy) in enumerate(spawns, 1):
-        s_dist = int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))
-        st.sidebar.markdown(f"👹 **Spawn {idx}:** `{s_dist} km` from Hive")
+    else: st.error("❌ No valid spawning coordinates found with the current constraints.")
 
 CENTER_X, CENTER_Y = 520, 600
 min_x, max_x = CENTER_X - 350, CENTER_X + 350
@@ -148,7 +99,6 @@ temple_data = pd.DataFrame([
 ])
 
 monster_list = [{"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "TextLabel": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"} for idx, (sx, sy) in enumerate(spawns, 1)]
-
 rival_list = []
 for r in rivals:
     if min_x <= r["X"] <= max_x and min_y <= r["Y"] <= max_y:
@@ -158,26 +108,13 @@ for r in rivals:
 spawn_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "TextLabel", "Label"])
 danger_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Label"])
 
-x_scale = alt.Scale(domain=[min_x_iso, max_x_iso])
-y_scale = alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
+x_scale, y_scale = alt.Scale(domain=[min_x_iso, max_x_iso]), alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
 
-danger_zone_layer = alt.Chart(danger_data).mark_point(
-    color='rgba(255, 0, 0, 0.12)', 
-    stroke='#8B0000',               
-    strokeWidth=2,                 
-    filled=True, 
-    size=16500                      
-).encode(
-    x=alt.X('X_iso:Q', scale=x_scale, axis=None),
-    y=alt.Y('Y_iso:Q', scale=y_scale, axis=None),
-    tooltip=['Label:N']
-)
-
+danger_zone_layer = alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N'])
 hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
 throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
 temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
 target_layer = alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-
 monster_emoji_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
 monster_text_layer = alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N', tooltip=['Label:N'])
 
