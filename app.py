@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import altair as alt
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 st.title("🥷 Evony Spawn Generator")
@@ -19,48 +20,75 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.")
-st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the fields side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
+st.markdown("### 📋 Instructions:\n1. Enter your coordinates into the side-by-side boxes below.\n2. The boxes are locked narrow so they fit beautifully on any phone screen without wrapping!\n3. The app will automatically calculate your safe location to teleport to as you type!")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
+
+for i in range(1, 6):
+    if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
+    if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
 
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6): st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
     st.rerun()
 
 st.subheader("📍 Active Spawns")
+
+# Compact layout row generation for the HTML component embedder
+rows_html = ""
 for i in range(1, 6):
-    if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
-    if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
+    is_hidden = "hidden" if i > 1 and not (st.session_state[f'x_{i-1}'] and st.session_state[f'y_{i-1}']) else ""
+    rows_html += f"""
+    <div class="spawn-row {is_hidden}" id="row_{i}">
+        <div class="label">Spawn {i}</div>
+        <input type="number" class="input-box" id="x_{i}" placeholder="X..." value="{st.session_state[f'x_{i}']}" oninput="updateData({i})">
+        <input type="number" class="input-box" id="y_{i}" placeholder="Y..." value="{st.session_state[f'y_{i}']}" oninput="updateData({i})">
+    </div>"""
+
+widget_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    body {{ font-family: sans-serif; background-color: transparent; color: white; margin: 0; padding: 0; }}
+    .spawn-row {{ display: flex; align-items: center; margin-bottom: 12px; }}
+    .label {{ width: 75px; font-weight: bold; font-size: 14px; color: #E0E0E0; }}
+    .input-box {{ width: 85px; padding: 8px 10px; background: #1E293B; border: 1px solid #475569; border-radius: 6px; color: white; font-size: 15px; margin-right: 10px; outline: none; }}
+    .input-box:focus {{ border-color: #FFD700; box-shadow: 0 0 5px rgba(255,215,0,0.3); }}
+    .hidden {{ display: none !important; }}
+</style>
+</head>
+<body>
+    {rows_html}
+    <script>
+    function updateData(rowId) {{
+        var xVal = document.getElementById('x_' + rowId).value;
+        var yVal = document.getElementById('y_' + rowId).value;
+        if(xVal && yVal && rowId < 5) {{
+            var nextRow = document.getElementById('row_' + (rowId + 1));
+            if(nextRow) nextRow.classList.remove('hidden');
+        }}
+        window.parent.postMessage({{type: 'streamlit:setComponentValue', value: {{key: 'spawn_update', row: rowId, x: xVal, y: yVal}}}}, '*');
+    }}
+    </script>
+</body>
+</html>"""
+
+response = components.html(widget_html, height=210, scrolling=False)
+
+if response and isinstance(response, dict) and response.get('key') == 'spawn_update':
+    r = response.get('row')
+    st.session_state[f"x_{r}"] = response.get('x')
+    st.session_state[f"y_{r}"] = response.get('y')
+    st.rerun()
 
 spawns = []
-def get_coord(val_string):
-    try:
-        val = int(val_string.strip())
-        if 0 <= val <= 1200: return val
-    except ValueError: pass
-    return None
-
-# --- Shrunken Side-by-Side Mobile Input Grid ---
 for i in range(1, 6):
-    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        # Uses explicit fractional spacing ratios to force fields side-by-side natively on mobile phone screens
-        col_lbl, col_x, col_y = st.columns([1.5, 2, 2], gap="small")
-        
-        with col_lbl:
-            # Clean layout spacer label aligned with the fields
-            st.markdown(f"<div style='padding-top: 8px; font-weight: bold;'>Spawn {i}</div>", unsafe_allow_html=True)
-            
-        with col_x:
-            # Collapsing labels prevents Streamlit from stacking fields vertically on phone views
-            x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...", label_visibility="collapsed")
-            
-        with col_y:
-            y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...", label_visibility="collapsed")
-            
-        x_val, y_val = get_coord(x_in), get_coord(y_in)
-        if x_val is not None and y_val is not None: 
-            spawns.append((x_val, y_val))
+    try:
+        x_val, y_val = int(str(st.session_state[f"x_{i}"]).strip()), int(str(st.session_state[f"y_{i}"]).strip())
+        if 0 <= x_val <= 1200 and 0 <= y_val <= 1200: spawns.append((x_val, y_val))
+    except ValueError: pass
 
 st.write("---")
 target_x, target_y, true_dist = None, None, None
@@ -68,8 +96,7 @@ target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
 rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
 
 if len(spawns) > 0:
-    x_range = np.arange(0, 1200)
-    y_range = np.arange(0, 1200)
+    x_range, y_range = np.arange(0, 1200), np.arange(0, 1200)
     X, Y = np.meshgrid(x_range, y_range)
     X, Y = X.flatten(), Y.flatten()
     valid_mask = np.ones_like(X, dtype=bool)
@@ -87,20 +114,15 @@ if len(spawns) > 0:
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
         st.write("**Spawn Distances from Hive:**")
-        dist_strings = []
-        for idx, (sx, sy) in enumerate(spawns, 1):
-            s_dist = int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))
-            dist_strings.append(f"**Spawn {idx}:** {s_dist} km")
+        dist_strings = [f"**Spawn {idx}:** {int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]
         st.write(" | ".join(dist_strings))
-                
         target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
-    else: st.error("❌ No valid spawning coordinates found with the current constraints.")
+    else: st.error("❌ No valid spawning coordinates found.")
 
 CENTER_X, CENTER_Y = 520, 600
-min_x, max_x = CENTER_X - 350, CENTER_X + 350
-min_y, max_y = CENTER_Y - 350, CENTER_Y + 350
+min_x, max_x, min_y, max_y = CENTER_X - 350, CENTER_X + 350, CENTER_Y - 350, CENTER_Y + 350
 min_x_iso, max_x_iso = min_x - max_y, max_x - min_y
-max_y_iso = min_x + min_y, max_x + max_y
+min_y_iso, max_y_iso = min_x + min_y, max_x + max_y
 
 hive_data = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
 throne_data = pd.DataFrame([{"X_iso": 600 - 600, "Y_iso": 600 + 600, "Emoji": "👑", "Label": "Throne (600,600)"}])
@@ -122,13 +144,13 @@ danger_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=[
 
 x_scale, y_scale = alt.Scale(domain=[min_x_iso, max_x_iso]), alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
 
-danger_zone_layer = alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N'])
-hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-target_layer = alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-monster_emoji_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-monster_text_layer = alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N', tooltip=['Label:N'])
+danger_zone_layer = alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None))
+hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N')
+throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N')
+temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N')
+target_layer = alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N')
+monster_emoji_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N')
+monster_text_layer = alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N')
 
 chart = alt.layer(danger_zone_layer, throne_layer, temple_layer, hive_layer, target_layer, monster_emoji_layer, monster_text_layer).properties(width=700, height=500, background='rgba(0,0,0,0)').configure_view(strokeOpacity=0)
 st.altair_chart(chart, use_container_width=True)
