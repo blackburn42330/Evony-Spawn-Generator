@@ -20,7 +20,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.")
-st.markdown("### 📋 Instructions:\n1. Enter your coordinates into the side-by-side boxes below.\n2. The boxes are locked narrow so they fit beautifully on any phone screen without wrapping!\n3. The app will automatically calculate your safe location to teleport to as you type!")
+st.markdown("### 📋 Instructions:\n1. Enter your coordinates into the side-by-side boxes below.\n2. Tap anywhere outside the input fields to trigger the calculation instantly!\n3. The app will automatically calculate your safe location to teleport to as you type!")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -44,8 +44,8 @@ for i in range(1, 6):
     rows_html += f"""
     <div class="spawn-row {is_hidden}" id="row_{i}">
         <div class="label">Spawn {i}</div>
-        <input type="number" class="input-box" id="x_{i}" placeholder="X..." value="{st.session_state[f'x_{i}']}" oninput="updateData({i})">
-        <input type="number" class="input-box" id="y_{i}" placeholder="Y..." value="{st.session_state[f'y_{i}']}" oninput="updateData({i})">
+        <input type="number" class="input-box" id="x_{i}" placeholder="X..." value="{st.session_state[f'x_{i}']}" onchange="updateData({i})">
+        <input type="number" class="input-box" id="y_{i}" placeholder="Y..." value="{st.session_state[f'y_{i}']}" onchange="updateData({i})">
     </div>"""
 
 widget_html = f"""
@@ -64,7 +64,6 @@ widget_html = f"""
 <body>
     {rows_html}
     <script>
-    var timers = {{}};
     function updateData(rowId) {{
         var x = document.getElementById('x_' + rowId).value;
         var y = document.getElementById('y_' + rowId).value;
@@ -72,10 +71,7 @@ widget_html = f"""
             var n = document.getElementById('row_' + (rowId + 1));
             if(n) n.classList.remove('hidden');
         }}
-        clearTimeout(timers[rowId]);
-        timers[rowId] = setTimeout(function() {{
-            window.parent.postMessage({{type: 'streamlit:setComponentValue', value: {{key: 'sp_up', row: rowId, x: x, y: y}}}}, '*');
-        }}, 400);
+        window.parent.postMessage({{type: 'streamlit:setComponentValue', value: {{key: 'sp_up', row: rowId, x: x, y: y}}}}, '*');
     }}
     </script>
 </body>
@@ -98,7 +94,7 @@ for i in range(1, 6):
     except ValueError: pass
 
 target_x, target_y, true_dist = None, None, None
-target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
+target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji"])
 rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
 
 if len(spawns) > 0:
@@ -132,7 +128,7 @@ for r in rivals:
 sp_df = pd.DataFrame(m_list) if m_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Lbl"])
 dg_df = pd.DataFrame(r_list) if r_list else pd.DataFrame(columns=["X_iso", "Y_iso"])
 
-x_sc, y_scale = alt.Scale(domain=[-430, 270]), alt.Scale(domain=[500, 1250], reverse=True)
+x_sc, y_scale = alt.Scale(domain=[-430, 270]), alt.Scale(domain=[450, 1150], reverse=True)
 def mk_lyr(df, txt, sz, dx=0, dy=0, c=None, st_c=None, sw=0):
     o = alt.Chart(df).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None))
     if c and st_c: return o.mark_point(color=c, stroke=st_c, strokeWidth=sw, filled=True, size=16500)
