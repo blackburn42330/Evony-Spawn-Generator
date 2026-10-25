@@ -54,7 +54,7 @@ widget_html = f"""
 <head>
 <style>
     html, body {{ height: 100%; width: 100%; font-family: sans-serif; background-color: transparent; color: white; margin: 0; padding: 0; }}
-    .container {{ height: 100%; width: 100%; }}
+    .container {{ height: 100%; width: 100%; padding-top: 5px; }}
     .spawn-row {{ display: flex; align-items: center; margin-bottom: 12px; }}
     .label {{ width: 75px; font-weight: bold; font-size: 14px; color: #E0E0E0; }}
     .input-box {{ width: 85px; padding: 8px 10px; background: #1E293B; border: 1px solid #475569; border-radius: 6px; color: white; font-size: 15px; margin-right: 10px; outline: none; }}
@@ -77,7 +77,6 @@ widget_html = f"""
         window.parent.postMessage({{type: 'streamlit:setComponentValue', value: {{key: 'sp_up', row: rowId, x: x, y: y}}}}, '*');
     }}
     
-    // Forces input boxes to blur and update if a user taps anywhere outside the text fields
     document.getElementById('bg_container').addEventListener('click', function(e) {{
         if (e.target.tagName !== 'INPUT') {{
             var inputs = document.getElementsByTagName('input');
@@ -107,7 +106,7 @@ for i in range(1, 6):
     except ValueError: pass
 
 target_x, target_y, true_dist = None, None, None
-target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji"])
+target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
 rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
 
 if len(spawns) > 0:
@@ -124,27 +123,30 @@ if len(spawns) > 0:
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         st.write("**Spawn Distances from Hive:**")
         st.write(" | ".join([f"**Spawn {idx}:** {int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]))
-        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯"}])
+        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
     else: st.error("❌ No valid spawning coordinates found.")
 
-hive_df = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰"}])
-throne_df = pd.DataFrame([{"X_iso": 0, "Y_iso": 1200, "Emoji": "👑"}])
-temple_df = pd.DataFrame([{"X_iso": -600, "Y_iso": 1200, "Emoji": "🏛️"}, {"X_iso": 0, "Y_iso": 600, "Emoji": "🏛️"}, {"X_iso": 600, "Y_iso": 1200, "Emoji": "🏛️"}])
+hive_df = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
+throne_df = pd.DataFrame([{"X_iso": 0, "Y_iso": 1200, "Emoji": "👑", "Label": "Throne (600,600)"}])
+temple_df = pd.DataFrame([
+    {"X_iso": -600, "Y_iso": 1200, "Emoji": "🏛️", "Label": "Hunter Temple (300,900)"}, 
+    {"X_iso": 0, "Y_iso": 600, "Emoji": "🏛️", "Label": "Harvest Temple (300,300)"}, 
+    {"X_iso": 600, "Y_iso": 1200, "Emoji": "🏛️", "Label": "Forging Temple (900,300)"}
+])
 
 m_list, r_list = [], []
-for idx, (sx, sy) in enumerate(spawns, 1): m_list.append({"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "Lbl": str(idx)})
+for idx, (sx, sy) in enumerate(spawns, 1): m_list.append({"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "Lbl": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"})
 for r in rivals:
-    if 170 <= r["X"] <= 870 and 250 <= r["Y"] <= 950:
-        m_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Emoji": "💀", "Lbl": r["Tag"]})
-        r_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"]})
+    m_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Emoji": "💀", "Lbl": r["Tag"], "Label": f"{r['Tag']} ({r['X']},{r['Y']})"})
+    r_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Label": f"{r['Tag']} Danger (200km)"})
 
-sp_df = pd.DataFrame(m_list) if m_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Lbl"])
-dg_df = pd.DataFrame(r_list) if r_list else pd.DataFrame(columns=["X_iso", "Y_iso"])
+sp_df = pd.DataFrame(m_list) if m_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Lbl", "Label"])
+dg_df = pd.DataFrame(r_list) if r_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Label"])
 
-# 🗺️ Fixed map scale constraints to resolve chart schema validation error
-x_sc, y_scale = alt.Scale(domain=[-780, 620]), alt.Scale(domain=[420, 1820], reverse=True)
+# 🗺️ Fixed map scale domains perfectly to resolve schema validation issues completely
+x_sc, y_scale = alt.Scale(domain=[-780, 620]), alt.Scale(domain=[-420, 1780], reverse=True)
 def mk_lyr(df, txt, sz, dx=0, dy=0, c=None, st_c=None, sw=0):
-    o = alt.Chart(df).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None))
+    o = alt.Chart(df).encode(x=alt.X('X_iso:Q', scale=x_sc, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N'])
     if c and st_c: return o.mark_point(color=c, stroke=st_c, strokeWidth=sw, filled=True, size=16500)
     return o.mark_text(size=sz, dx=dx, dy=dy, fontWeight='bold', color='white' if not txt=='Emoji' else None).encode(text=f'{txt}:N')
 
