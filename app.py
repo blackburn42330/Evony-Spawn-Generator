@@ -6,7 +6,7 @@ import altair as alt
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 st.title("🥷 Evony Spawn Generator")
 
-# 📱 Safe Responsive Layout Script
+# Minimal, clean design adjustments without structural style injections
 st.markdown("""
     <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
     <style>
@@ -16,29 +16,6 @@ st.markdown("""
         background-color: rgba(255, 215, 0, 0.05) !important; width: 100% !important; margin: 10px 0 15px 0 !important;
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
-    
-    /* 📱 Responsive Mobile Row Lock */
-    @media (max-width: 640px) {
-        div[data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            gap: 8px !important;
-            width: 100% !important;
-        }
-        div[data-testid="column"] {
-            flex: 1 1 50% !important;
-            min-width: 0 !important;
-        }
-    }
-    
-    /* 💻 iPad/Desktop constraints to shrink the boxes and clear empty gray margins */
-    @media (min-width: 641px) {
-        div[data-testid="stHorizontalBlock"] {
-            max-width: 320px !important; /* Locks total row footprint tightly */
-            gap: 12px !important;
-        }
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -68,7 +45,8 @@ def get_coord(val_string):
 # --- Native Responsive Layout Generation ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        col_a, col_b = st.columns(2, gap="small")
+        # 📊 Shrunks fields side-by-side natively by shifting the whitespace to the third column layout cell
+        col_a, col_b, spacer = st.columns([1, 1, 3], gap="small")
         with col_a: x_in = st.text_input(f"Spawn {i} X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...")
         with col_b: y_in = st.text_input(f"Spawn {i} Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...")
         x_val, y_val = get_coord(x_in), get_coord(y_in)
