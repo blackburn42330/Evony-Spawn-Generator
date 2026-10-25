@@ -43,32 +43,57 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
-x_in_1 = st.text_input("Spawn 1 X", value=st.session_state["x_1"], key="x_1", placeholder="Type X...")
-y_in_1 = st.text_input("Spawn 1 Y", value=st.session_state["y_1"], key="y_1", placeholder="Type Y...")
+# --- Spawn 1 Row ---
+col1_a, col1_b = st.columns(2)
+with col1_a:
+    x_in_1 = st.text_input("Spawn 1 X", value=st.session_state["x_1"], key="x_1", placeholder="Type X...")
+with col1_b:
+    y_in_1 = st.text_input("Spawn 1 Y", value=st.session_state["y_1"], key="y_1", placeholder="Type Y...")
 x_1, y_1 = get_coord(x_in_1), get_coord(y_in_1)
 
 if x_1 is not None and y_1 is not None:
-    spawns.append((x_1, y_1)); st.write("---")
-    x_in_2 = st.text_input("Spawn 2 X", value=st.session_state["x_2"], key="x_2", placeholder="Type X...")
-    y_in_2 = st.text_input("Spawn 2 Y", value=st.session_state["y_2"], key="y_2", placeholder="Type Y...")
+    spawns.append((x_1, y_1))
+    
+    # --- Spawn 2 Row ---
+    col2_a, col2_b = st.columns(2)
+    with col2_a:
+        x_in_2 = st.text_input("Spawn 2 X", value=st.session_state["x_2"], key="x_2", placeholder="Type X...")
+    with col2_b:
+        y_in_2 = st.text_input("Spawn 2 Y", value=st.session_state["y_2"], key="y_2", placeholder="Type Y...")
     x_2, y_2 = get_coord(x_in_2), get_coord(y_in_2)
     
     if x_2 is not None and y_2 is not None:
-        spawns.append((x_2, y_2)); st.write("---")
-        x_in_3 = st.text_input("Spawn 3 X", value=st.session_state["x_3"], key="x_3", placeholder="Type X...")
-        y_in_3 = st.text_input("Spawn 3 Y", value=st.session_state["y_3"], key="y_3", placeholder="Type Y...")
+        spawns.append((x_2, y_2))
+        
+        # --- Spawn 3 Row ---
+        col3_a, col3_b = st.columns(2)
+        with col3_a:
+            x_in_3 = st.text_input("Spawn 3 X", value=st.session_state["x_3"], key="x_3", placeholder="Type X...")
+        with col3_b:
+            y_in_3 = st.text_input("Spawn 3 Y", value=st.session_state["y_3"], key="y_3", placeholder="Type Y...")
         x_3, y_3 = get_coord(x_in_3), get_coord(y_in_3)
         
         if x_3 is not None and y_3 is not None:
-            spawns.append((x_3, y_3)); st.write("---")
-            x_in_4 = st.text_input("Spawn 4 X", value=st.session_state["x_4"], key="x_4", placeholder="Type X...")
-            y_in_4 = st.text_input("Spawn 4 Y", value=st.session_state["y_4"], key="y_4", placeholder="Type Y...")
+            spawns.append((x_3, y_3))
+            
+            # --- Spawn 4 Row ---
+            col4_a, col4_b = st.columns(2)
+            with col4_a:
+                x_in_4 = st.text_input("Spawn 4 X", value=st.session_state["x_4"], key="x_4", placeholder="Type X...")
+            with col4_b:
+                y_in_4 = st.text_input("Spawn 4 Y", value=st.session_state["y_4"], key="y_4", placeholder="Type Y...")
             x_4, y_4 = get_coord(x_in_4), get_coord(y_in_4)
             
             if x_4 is not None and y_4 is not None:
-                spawns.append((x_4, y_4)); st.write("---")
-                x_in_5 = st.text_input("Spawn 5 X", value=st.session_state["x_5"], key="x_5", placeholder="Type X...")
-                y_in_5 = st.text_input("Spawn 5 Y", value=st.session_state["y_5"], key="y_5", placeholder="Type Y...")
+                spawns.append((x_4, y_4))
+                
+                # --- Spawn 5 Row ---
+                col5_a, col5_b = st.columns(2)
+                with col5_a:
+                    x_in_5 = st.text_input("Spawn 5 X", value=st.session_state["x_5"], key="x_5", placeholder="Type X...")
+                with col5_b:
+                    y_in_5 = st.text_input("Spawn 5 Y", value=st.session_state["y_5"], key="y_5", placeholder="Type Y...")
+                x_5, y_5 = get_coord(x_in_5), get_coord(y_in_5)
                 if x_5 is not None and y_5 is not None: spawns.append((x_5, y_5))
 
 st.write("---")
@@ -128,8 +153,3 @@ if st.button("🥷 Calculate Next Closest Spawning Location", type="primary"):
         throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
         temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
         monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-        
-        chart = alt.layer(hive_layer, target_layer, throne_layer, temple_layer, monster_layer).properties(width=700, height=500).configure_view(strokeWidth=0)
-        st.altair_chart(chart, use_container_width=True)
-    else:
-        st.error("No valid teleport coordinate configurations match your current safety settings.")
