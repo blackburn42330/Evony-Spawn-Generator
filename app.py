@@ -6,6 +6,7 @@ import altair as alt
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 st.title("🥷 Evony Spawn Generator")
 
+# 📱 Custom Responsive CSS for Phone Screens
 st.markdown("""
     <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
     <style>
@@ -16,9 +17,22 @@ st.markdown("""
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
     
-    /* 📉 Custom styling rule to make spawn metrics smaller and tightly packed on mobile screens */
-    [data-testid="stMetricValue"] { font-size: 20px !important; }
-    [data-testid="stMetricLabel"] { font-size: 13px !important; font-weight: 500 !important; }
+    /* ⚡ Force columns to stay side-by-side on mobile devices */
+    [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+    }
+    
+    [data-testid="stHorizontalBlock"] > div {
+        min-width: 0 !important;
+        flex: 1 1 0% !important;
+    }
+    
+    /* 📉 Fine-tune metric font sizes for a clean mobile grid look */
+    [data-testid="stMetricValue"] { font-size: 16px !important; }
+    [data-testid="stMetricLabel"] { font-size: 11px !important; font-weight: 600 !important; white-space: nowrap !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -47,7 +61,8 @@ def get_coord(val_string):
 
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        col_a, col_b = st.columns(2)
+        # Added gap parameter to help fit mobile forms smoothly
+        col_a, col_b = st.columns(2, gap="small")
         with col_a: x_in = st.text_input(f"Spawn {i} X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="Type X...")
         with col_b: y_in = st.text_input(f"Spawn {i} Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Type Y...")
         x_val, y_val = get_coord(x_in), get_coord(y_in)
@@ -75,15 +90,14 @@ if len(spawns) > 0:
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
         
-        # 🟢 Combined coordinates and distance inside the green alert box
         st.success(f"🎯 **Port here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 📊 Clean grid containing only the downsized spawn trackers
+        # 📊 Creates a forced horizontal row for spawn metric values
         if len(spawns) > 0:
-            metric_cols = st.columns(len(spawns))
+            metric_cols = st.columns(len(spawns), gap="small")
             for idx, (sx, sy) in enumerate(spawns, 1):
                 s_dist = int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))
-                with metric_cols[idx-1]: st.metric(label=f"Spawn {idx} from Hive", value=f"{s_dist} km")
+                with metric_cols[idx-1]: st.metric(label=f"Spwn {idx}", value=f"{s_dist}k")
                 
         target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
     else: st.error("❌ No valid spawning coordinates found with the current constraints.")
