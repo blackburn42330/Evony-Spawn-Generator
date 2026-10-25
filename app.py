@@ -45,10 +45,11 @@ def get_coord(val_string):
 # --- Native Responsive Layout Generation ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        # 📊 Shrunks fields side-by-side natively by shifting the whitespace to the third column layout cell
-        col_a, col_b, spacer = st.columns([1, 1, 3], gap="small")
-        with col_a: x_in = st.text_input(f"Spawn {i} X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...")
-        with col_b: y_in = st.text_input(f"Spawn {i} Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...")
+        # Displays the row name above the fields so the input boxes stay small and row-aligned
+        st.markdown(f"**Spawn {i}**")
+        col_a, col_b, spacer = st.columns([1, 1, 2], gap="small")
+        with col_a: x_in = st.text_input("X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...")
+        with col_b: y_in = st.text_input("Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...")
         x_val, y_val = get_coord(x_in), get_coord(y_in)
         if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
 
