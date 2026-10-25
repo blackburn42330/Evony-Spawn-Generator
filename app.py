@@ -18,8 +18,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🔄 Radius reverted back to 140km in the description
-st.write("Finds the closest available coordinate to the hive outside a 140km radius of your spawns and 200km away from rivals.")
+# 🔄 Radius Description updated to 150km
+st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.")
 
 st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below (do NOT enter your own hive coordinates).\n2. Click **🥷 Calculate Next Closest Spawning Location** to get a safe location to teleport to.\n3. Type the coordinates of your **next spawn** into the new box that appears.\n4. Keep repeating these steps until you are completely done spawning monsters!")
 
@@ -69,7 +69,6 @@ if x_1 is not None and y_1 is not None:
                 spawns.append((x_4, y_4)); st.write("---")
                 x_in_5 = st.text_input("Spawn 5 X", value=st.session_state["x_5"], key="x_5", placeholder="Type X...")
                 y_in_5 = st.text_input("Spawn 5 Y", value=st.session_state["y_5"], key="y_5", placeholder="Type Y...")
-                x_5, y_5 = get_coord(x_in_5), get_coord(y_in_5)
                 if x_5 is not None and y_5 is not None: spawns.append((x_5, y_5))
 
 st.write("---")
@@ -81,8 +80,8 @@ if st.button("🥷 Calculate Next Closest Spawning Location", type="primary"):
     X, Y = X.flatten(), Y.flatten()
     valid_mask = np.ones_like(X, dtype=bool)
     
-    # 🔄 Mask calculation logic rolled back to 140km distance filter
-    for sx, sy in spawns: valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 140)
+    # 🔄 Mask calculation logic changed from > 140 to > 150
+    for sx, sy in spawns: valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 150)
     rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
     for r in rivals: valid_mask &= (np.sqrt((X - r["X"])**2 + (r["Y"] - Y)**2) > 200)
     
@@ -129,13 +128,8 @@ if st.button("🥷 Calculate Next Closest Spawning Location", type="primary"):
         throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
         temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
         monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-        number_layer = alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='#FFD700', dx=20, dy=-12).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N')
         
-        danger_fill = alt.Chart(danger_ring_data).mark_point(size=9500, color='#FF1744', opacity=0.08, filled=True).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None))
-        danger_border = alt.Chart(danger_ring_data).mark_point(size=9500, strokeWidth=3.0, color='#FF1744', opacity=0.70, filled=False).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None))
-
-        final_map = alt.layer(danger_fill, danger_border, hive_layer, target_layer, throne_layer, temple_layer, monster_layer, number_layer).properties(width=500, height=450).configure_view(strokeOpacity=0)
-        st.write("### 🥷 Ninja Clan Inc.")
-        st.altair_chart(final_map, use_container_width=True)
+        chart = alt.layer(hive_layer, target_layer, throne_layer, temple_layer, monster_layer).properties(width=700, height=500).configure_view(strokeWidth=0)
+        st.altair_chart(chart, use_container_width=True)
     else:
-        st.error("No valid coordinates found on the map grid. Try clearing some old spawns!")
+        st.error("No valid teleport coordinate configurations match your current safety settings.")
