@@ -44,9 +44,20 @@ def get_coord(val_string):
 # --- Native Responsive Layout Generation ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        col_a, col_b = st.columns([1, 1], gap="small")
-        with col_a: x_in = st.text_input(f"Spawn {i} X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...")
-        with col_b: y_in = st.text_input(f"Spawn {i} Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...")
+        # 🛠️ Left label column + two narrow input columns + right whitespace absorber
+        col_lbl, col_a, col_b, spacer = st.columns([1.5, 1.5, 1.5, 4], gap="small")
+        
+        with col_lbl:
+            # Inline HTML text replaces the bulky stacking-prone native form labels
+            st.markdown(f"<div style='padding-top: 6px; font-weight: bold; font-size:15px; white-space: nowrap;'>Spawn {i}</div>", unsafe_allow_html=True)
+            
+        with col_a: 
+            # label_visibility="collapsed" stops the phone from breaking rows completely
+            x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...", label_visibility="collapsed")
+            
+        with col_b: 
+            y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...", label_visibility="collapsed")
+            
         x_val, y_val = get_coord(x_in), get_coord(y_in)
         if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
 
