@@ -15,23 +15,6 @@ st.markdown("""
         background-color: rgba(255, 215, 0, 0.05) !important; width: 100% !important; margin: 10px 0 15px 0 !important;
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
-    
-    /* ⚡ NATIVE LAYOUT LOCKER - FORCES ELEMENTS SIDE-BY-SIDE ON PHONE SCREENS */
-    div[data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        justify-content: flex-start !important;
-        gap: 12px !important;
-        width: 100% !important;
-    }
-    
-    /* Shrinks input box containers to a tight 120px max-width suited for 3-4 digit coordinates */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-        flex: 0 0 120px !important;
-        min-width: 100px !important;
-        max-width: 120px !important;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -58,13 +41,13 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
-# --- Responsive Input Layout Generation ---
+# --- Clean Native 1:1 Side-by-Side Column Loop ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        # Explicitly tells Streamlit to use standard 1:1 side-by-side spacing ratio properties
+        st.write(f"**Spawn {i}**")
         col_a, col_b = st.columns([1, 1], gap="small")
-        with col_a: x_in = st.text_input(f"Spawn {i} X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...")
-        with col_b: y_in = st.text_input(f"Spawn {i} Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...")
+        with col_a: x_in = st.text_input("X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="Type X...")
+        with col_b: y_in = st.text_input("Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Type Y...")
         x_val, y_val = get_coord(x_in), get_coord(y_in)
         if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
 
