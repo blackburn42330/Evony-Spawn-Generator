@@ -6,6 +6,7 @@ import altair as alt
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 st.title("🥷 Evony Spawn Generator")
 
+# Minimal, clean design adjustments without structural style injections
 st.markdown("""
     <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
     <style>
@@ -15,19 +16,6 @@ st.markdown("""
         background-color: rgba(255, 215, 0, 0.05) !important; width: 100% !important; margin: 10px 0 15px 0 !important;
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
-    
-    /* Force specific custom layout blocks to stay row-aligned on narrow mobile viewports */
-    div[data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        justify-content: flex-start !important;
-        gap: 8px !important;
-    }
-    div[data-testid="column"] {
-        flex: 0 0 auto !important;
-        width: auto !important;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -54,25 +42,15 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
-# --- Native Locked Side-by-Side Mobile Input Grid Loop ---
+# --- Native Responsive Layout Generation ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        # 🛠️ Left-aligns X and Y tightly and absorbs iPad whitespace via a large 3rd column
-        col_lbl, col_x, col_y, col_spacer = st.columns([1.2, 1.5, 1.5, 3], gap="small")
-        
-        with col_lbl:
-            st.markdown(f"<div style='padding-top: 6px; font-weight: bold; font-size:15px; white-space: nowrap;'>Spawn {i}</div>", unsafe_allow_html=True)
-            
-        with col_x:
-            # Collapsing label flags stops mobile phones from triggering a vertical element stack
-            x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...", label_visibility="collapsed")
-            
-        with col_y:
-            y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...", label_visibility="collapsed")
-            
+        # 🛠️ Fixed: Explicit sizing weights make X and Y narrow and push empty space to a third spacer column on the right
+        col_a, col_b, spacer = st.columns([1, 1, 3], gap="small")
+        with col_a: x_in = st.text_input(f"Spawn {i} X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...")
+        with col_b: y_in = st.text_input(f"Spawn {i} Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...")
         x_val, y_val = get_coord(x_in), get_coord(y_in)
-        if x_val is not None and y_val is not None: 
-            spawns.append((x_val, y_val))
+        if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
 
 st.write("---")
 target_x, target_y, true_dist = None, None, None
