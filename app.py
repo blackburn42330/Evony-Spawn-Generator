@@ -6,8 +6,8 @@ import altair as alt
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
 st.title("🥷 Evony Spawn Generator")
 
-# Clean, safe button styling overlay without layout-breaking side effects
 st.markdown("""
+    <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
     <style>
     div.stButton > button:first-child {
         font-size: 20px !important; font-weight: bold !important; padding: 10px 24px !important;
@@ -15,15 +15,27 @@ st.markdown("""
         background-color: rgba(255, 215, 0, 0.05) !important; width: 100% !important; margin: 10px 0 15px 0 !important;
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
+    
+    /* 📱 Global overrides to completely force side-by-side rendering on narrow screens */
+    [data-testid="column"] {
+        width: 50% !important;
+        flex: 1 1 50% !important;
+        min-width: 50% !important;
+    }
+    [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+    }
+    div.stTextInput > div > div > input {
+        padding: 6px 10px !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-### ✨ BBR is an app writing genius ✨
-Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.
-""")
-
-st.markdown("### 📋 Instructions:\n1. Enter your **first monster spawn** below.\n2. Type your **next spawn** into the fields side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
+st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.")
+st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the fields side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -45,7 +57,7 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
-# --- Mobile Side-by-Side Columns ---
+# --- Clean Layout Generation Loop ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
         col_a, col_b = st.columns(2)
@@ -76,9 +88,9 @@ if len(spawns) > 0:
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
         
-        st.success(f"🎯 **Port here:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
+        # 🟢 Success block message updated to text description constraints
+        st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 📊 Clean text summary list instead of bulky metric elements that stack on mobile screens
         st.write("**Spawn Distances from Hive:**")
         dist_strings = []
         for idx, (sx, sy) in enumerate(spawns, 1):
