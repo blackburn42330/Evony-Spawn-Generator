@@ -98,11 +98,9 @@ if x_1 is not None and y_1 is not None:
 
 st.write("---")
 
-# 🎯 Initializing target placeholder parameters
 target_x, target_y, true_dist = None, None, None
 target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
 
-# ⚡ Run logic calculation if spawns are entered
 if len(spawns) > 0:
     x_range = np.arange(0, 1200)
     y_range = np.arange(0, 1200)
@@ -127,7 +125,6 @@ if len(spawns) > 0:
     else:
         st.error("❌ No valid spawning coordinates found with the current constraints.")
 
-# 🗺️ ALWAYS RENDERS MAP DOWN BELOW INSTEAD OF INSIDE THE TARGET CHECK BLOCK
 CENTER_X, CENTER_Y = 520, 600
 min_x, max_x = CENTER_X - 350, CENTER_X + 350
 min_y, max_y = CENTER_Y - 350, CENTER_Y + 350
@@ -156,8 +153,12 @@ y_scale = alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
 hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
 throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
 temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
 target_layer = alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
 
-chart = alt.layer(throne_layer, temple_layer, hive_layer, target_layer, monster_layer).properties(width=700, height=500, background='rgba(0,0,0,0)').configure_view(strokeOpacity=0)
+# 👾 Split monster icons and text labels into two overlapping layers
+monster_emoji_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
+monster_text_layer = alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N', tooltip=['Label:N'])
+
+# 🗺️ Stitched all fixed visual configurations back together
+chart = alt.layer(throne_layer, temple_layer, hive_layer, target_layer, monster_emoji_layer, monster_text_layer).properties(width=700, height=500, background='rgba(0,0,0,0)').configure_view(strokeOpacity=0)
 st.altair_chart(chart, use_container_width=True)
