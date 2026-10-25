@@ -21,7 +21,7 @@ st.markdown("""
 # 🔄 Radius Description updated to 150km
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.")
 
-st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below (do NOT enter your own hive coordinates).\n2. Click **🥷 Calculate Next Closest Spawning Location** to get a safe location to teleport to.\n3. Type the coordinates of your **next spawn** into the new box that appears.\n4. Keep repeating these steps until you are completely done spawning monsters!")
+st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below (do NOT enter your own hive coordinates).\n2. Type the coordinates of your **next spawn** into the new box that appears side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -98,7 +98,8 @@ if x_1 is not None and y_1 is not None:
 
 st.write("---")
 
-if st.button("🥷 Calculate Next Closest Spawning Location", type="primary"):
+# ⚡ Live calculation triggers automatically whenever any valid coordinates are present in the list
+if len(spawns) > 0:
     x_range = np.arange(0, 1200)
     y_range = np.arange(0, 1200)
     X, Y = np.meshgrid(x_range, y_range)
@@ -153,3 +154,5 @@ if st.button("🥷 Calculate Next Closest Spawning Location", type="primary"):
         throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
         temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
         monster_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
+    else:
+        st.error("❌ No valid spawning coordinates found with the current constraints.")
