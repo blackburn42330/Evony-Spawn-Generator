@@ -63,7 +63,7 @@ word_to_num = {
     "oh": "0",
 }
 
-# --- ⚡ FIXED: Clean Array Position Extraction Pipeline ---
+# --- ⚡ FIXED: Clean List Array Index Parsing Pipeline ---
 if spoken_text:
     clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
     words = clean_text.split()
@@ -73,11 +73,11 @@ if spoken_text:
     # Pull out standalone digits out of the spoken voice data array
     all_numbers = re.findall(r"\d+", processed_text)
 
-    # FIXED: Direct list indexing mapping without structural text wrapping corruption
+    # FIXED: Direct list sequence item indexing safely extracted by position index array parameters
     if len(all_numbers) >= 3:
-        v_id = all_numbers[0].strip()
-        v_x = all_numbers[1].strip()
-        v_y = all_numbers[2].strip()
+        v_id = str(all_numbers[0]).strip()
+        v_x = str(all_numbers[1]).strip()
+        v_y = str(all_numbers[2]).strip()
 
         if v_id in ["1", "2", "3", "4", "5"]:
             try:
