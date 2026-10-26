@@ -74,7 +74,7 @@ if spoken_text:
     # Pull out standalone digits out of the spoken voice data
     all_numbers = re.findall(r"\d+", processed_text)
 
-    # FIXED: Extract correct array indices sequentially from the regex match list
+    # FIXED: Safely target the raw numeric items out of the list sequence natively
     if len(all_numbers) >= 3:
         v_id = str(all_numbers[0]).strip()
         v_x = str(all_numbers[1]).strip()
