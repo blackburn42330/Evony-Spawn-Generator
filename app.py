@@ -15,6 +15,16 @@ st.markdown("""
         background-color: rgba(255, 215, 0, 0.05) !important; width: 100% !important; margin: 10px 0 15px 0 !important;
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
+    
+    /* Styled custom action button layout */
+    .voice-btn {
+        display: block; width: 100%; font-size: 20px !important; font-weight: bold !important; 
+        padding: 12px 24px !important; text-align: center; border-radius: 8px !important; 
+        border: 2px solid #FFD700 !important; color: #FFD700 !important;
+        background-color: rgba(255, 215, 0, 0.05) !important; margin: 10px 0 15px 0 !important;
+        cursor: pointer; font-family: sans-serif; box-sizing: border-box;
+    }
+    .voice-btn:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -43,7 +53,7 @@ def get_coord(val_string):
 
 # --- Native Responsive Layout Generation ---
 for i in range(1, 6):
-    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
+    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]) :
         col_lbl, col_a, col_b, spacer = st.columns([1.5, 1.5, 1.5, 4], gap="small")
         
         with col_lbl:
@@ -82,23 +92,21 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🔊 Voice Button to get past browser security blockades
-        if st.button("🔊 Hear Next Target Coordinates"):
-            tts_html = f"""
-            <script>
-                if ('speechSynthesis' in window) {{
-                    window.speechSynthesis.cancel();
-                    const text = "teleport to coordinates x {target_x} y {target_y}";
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.rate = 1.0;
-                    utterance.pitch = 1.0;
-                    window.speechSynthesis.speak(utterance);
-                }} else {{
-                    alert("Speech Synthesis is supported but blocked by your browser settings.");
-                }}
-            </script>
-            """
-            st.components.v1.html(tts_html, height=0, width=0)
+        # 🔊 Direct Markdown Injection Button to unlock voice channel natively on mobile engines
+        voice_button_html = f"""
+        <button class="voice-btn" onclick="
+            if ('speechSynthesis' in window) {{
+                window.speechSynthesis.cancel();
+                var msg = new SpeechSynthesisUtterance('teleport to coordinates x {target_x} y {target_y}');
+                msg.rate = 1.0;
+                msg.pitch = 1.0;
+                window.speechSynthesis.speak(msg);
+            }} else {{
+                alert('Speech Engine Blocked');
+            }}
+        ">🔊 Hear Next Target Coordinates</button>
+        """
+        st.markdown(voice_button_html, unsafe_allow_html=True)
         
         st.write("**Spawn Distances from Hive:**")
         dist_strings = []
