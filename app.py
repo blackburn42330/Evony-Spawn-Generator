@@ -85,8 +85,8 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🔊 Updated Double Narration Phrasing with Punctuation-Based Slated Pause
-        narration_phrase = f"coords, {target_x}, {target_y}. ... coords, {target_x}, {target_y}."
+        # 🔊 Single-intro phrasing: "coords X, Y" ... pause ... "X, Y"
+        narration_phrase = f"coords, {target_x}, {target_y}. ... {target_x}, {target_y}."
         tts = gTTS(text=narration_phrase, lang='en', slow=False)
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
