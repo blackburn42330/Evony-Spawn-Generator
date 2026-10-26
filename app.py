@@ -85,18 +85,17 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🔊 iOS Autoplay Compliant Engine
-        narration_phrase = f"teleport to coordinates x {target_x} y {target_y}"
+        # 🔊 Updated Double Narration Phrasing with Punctuation-Based Slated Pause
+        narration_phrase = f"coords, {target_x}, {target_y}. ... coords, {target_x}, {target_y}."
         tts = gTTS(text=narration_phrase, lang='en', slow=False)
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
         audio_fp.seek(0)
         
-        # Encode audio into a direct data string to bypass browser sandboxing restrictions
+        # Encode audio into a data string
         b64_audio = base64.b64encode(audio_fp.read()).decode()
         audio_data_uri = f"data:audio/mp3;base64,{b64_audio}"
         
-        # Render a hidden native HTML5 element with the controls visible as a backup fallback
         st.write("🔊 **Voice Narration Track:**")
         st.markdown(f'<audio src="{audio_data_uri}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
         
