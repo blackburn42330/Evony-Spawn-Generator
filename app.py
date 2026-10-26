@@ -1,5 +1,6 @@
 import base64
 import io
+import re
 import altair as alt
 import numpy as np
 import pandas as pd
@@ -43,11 +44,8 @@ spoken_text = speech_to_text(
 
 # Parse incoming spoken phrases safely using standard regex capture group checks
 if spoken_text:
-    clean_text = str(spoken_text).lower().strip()
-    match = parse = np.core.defchararray.replace(
-        clean_text, ",", ""
-    )  # Strip out optional punctuation pauses
-    import re
+    # FIXED: Replaced the broken numpy call with a clean native Python string replace
+    clean_text = str(spoken_text).lower().replace(",", "").strip()
 
     extracted = re.search(r"spawn\s*([1-5])\s*(\d{1,4})\s*(\d{1,4})", clean_text)
     if extracted:
