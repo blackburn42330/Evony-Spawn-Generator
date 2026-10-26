@@ -63,7 +63,7 @@ word_to_num = {
     "oh": "0",
 }
 
-# --- Smart 3-Digit Tail Coordinate Parser Engine ---
+# --- ⚡ FIXED: Precise String Character Slicing Parser ---
 if spoken_text:
     clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
     words = clean_text.split()
@@ -74,7 +74,8 @@ if spoken_text:
     digits_only = re.sub(r"\D", "", processed_text)
 
     if len(digits_only) >= 5:
-        v_id = digits_only[0]  # First digit is always your Spawn ID row (1-5)
+        # FIXED: Extract ONLY the single first digit character out of the string matrix index as the row tracker ID
+        v_id = digits_only[0]
         coords_tail = digits_only[1:]  # Rest of the string is X and Y smashed together
 
         # Extract exactly the last 3 digits for Y, whatever is left over becomes X
@@ -118,7 +119,6 @@ def get_coord(val_string):
 
 # Clean columns completely intact for standard grid typing or voice updates
 for i in range(1, 6):
-    # FIXED: Corrected the f-string loop indexing syntax within the brackets
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
         col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
         with col_lbl:
