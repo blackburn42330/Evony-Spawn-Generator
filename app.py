@@ -28,7 +28,7 @@ st.markdown(
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
-# Initialize inputs inside state loops
+# 1. Initialize session states immediately at step 1
 for i in range(1, 6):
     if f"x_{i}" not in st.session_state:
         st.session_state[f"x_{i}"] = ""
@@ -36,13 +36,6 @@ for i in range(1, 6):
         st.session_state[f"y_{i}"] = ""
 
 st.subheader("🎙️ Hands-Free Voice Input")
-
-spoken_text = speech_to_text(
-    start_prompt="🎙️ Start Listening",
-    stop_prompt="🛑 Stop & Process",
-    language="en",
-    key="voice_input_engine",
-)
 
 # Text-to-Number Word Translation Dictionary to handle mobile voice streams
 word_to_num = {
@@ -63,18 +56,25 @@ word_to_num = {
     "oh": "0",
 }
 
+# 2. Render Microphone input container
+spoken_text = speech_to_text(
+    start_prompt="🎙️ Start Listening",
+    stop_prompt="🛑 Stop & Process",
+    language="en",
+    key="voice_input_engine",
+)
 
-# --- ⚡ FIXED: Clean Array Index Parsing Pipeline ---
+# 3. CRITICAL FIXED RUNTIME: Process variables BEFORE widgets generate on page flow
 if spoken_text:
     clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
     words = clean_text.split()
     translated_words = [word_to_num.get(w, w) for w in words]
     processed_text = " ".join(translated_words)
 
-    # Pull out standalone digits out of the spoken voice data
+    # Gather standalone integer matches out of the translated sequence
     all_numbers = re.findall(r"\d+", processed_text)
 
-    # FIXED: Safely target the raw numeric items out of the list sequence natively
+    # FIXED: Direct clean array position item targeting instead of string conversion layout blocks
     if len(all_numbers) >= 3:
         v_id = str(all_numbers[0]).strip()
         v_x = str(all_numbers[1]).strip()
@@ -82,7 +82,6 @@ if spoken_text:
 
         if v_id in ["1", "2", "3", "4", "5"]:
             try:
-                # Update session state values safely
                 st.session_state[f"x_{v_id}"] = str(int(v_x))
                 st.session_state[f"y_{v_id}"] = str(int(v_y))
                 st.rerun()
