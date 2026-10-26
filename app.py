@@ -28,7 +28,7 @@ st.markdown(
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
-# 1. Initialize session states immediately at step 1
+# Initialize inputs inside state loops cleanly
 for i in range(1, 6):
     if f"x_{i}" not in st.session_state:
         st.session_state[f"x_{i}"] = ""
@@ -36,6 +36,13 @@ for i in range(1, 6):
         st.session_state[f"y_{i}"] = ""
 
 st.subheader("🎙️ Hands-Free Voice Input")
+
+spoken_text = speech_to_text(
+    start_prompt="🎙️ Start Listening",
+    stop_prompt="🛑 Stop & Process",
+    language="en",
+    key="voice_input_engine",
+)
 
 # Text-to-Number Word Translation Dictionary to handle mobile voice streams
 word_to_num = {
@@ -56,32 +63,25 @@ word_to_num = {
     "oh": "0",
 }
 
-# 2. Render Microphone input container
-spoken_text = speech_to_text(
-    start_prompt="🎙️ Start Listening",
-    stop_prompt="🛑 Stop & Process",
-    language="en",
-    key="voice_input_engine",
-)
-
-# 3. CRITICAL FIXED RUNTIME: Process variables BEFORE widgets generate on page flow
+# --- ⚡ FIXED: Clean Array Position Extraction Pipeline ---
 if spoken_text:
     clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
     words = clean_text.split()
     translated_words = [word_to_num.get(w, w) for w in words]
     processed_text = " ".join(translated_words)
 
-    # Gather standalone integer matches out of the translated sequence
+    # Pull out standalone digits out of the spoken voice data array
     all_numbers = re.findall(r"\d+", processed_text)
 
-    # FIXED: Direct clean array position item targeting instead of string conversion layout blocks
+    # FIXED: Direct list indexing mapping without structural text wrapping corruption
     if len(all_numbers) >= 3:
-        v_id = str(all_numbers[0]).strip()
-        v_x = str(all_numbers[1]).strip()
-        v_y = str(all_numbers[2]).strip()
+        v_id = all_numbers[0].strip()
+        v_x = all_numbers[1].strip()
+        v_y = all_numbers[2].strip()
 
         if v_id in ["1", "2", "3", "4", "5"]:
             try:
+                # Assign values cleanly directly into session state storage vectors
                 st.session_state[f"x_{v_id}"] = str(int(v_x))
                 st.session_state[f"y_{v_id}"] = str(int(v_y))
                 st.rerun()
