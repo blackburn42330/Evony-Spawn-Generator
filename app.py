@@ -85,14 +85,14 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🔊 Single-intro phrasing: "coords X, Y" ... pause ... "X, Y"
+        # 🔊 British Voice Audio Engine (tld='co.uk')
         narration_phrase = f"coords, {target_x}, {target_y}. ... {target_x}, {target_y}."
-        tts = gTTS(text=narration_phrase, lang='en', slow=False)
+        tts = gTTS(text=narration_phrase, lang='en', tld='co.uk', slow=False)
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
         audio_fp.seek(0)
         
-        # Encode audio into a data string
+        # Encode audio into data string
         b64_audio = base64.b64encode(audio_fp.read()).decode()
         audio_data_uri = f"data:audio/mp3;base64,{b64_audio}"
         
