@@ -1,8 +1,11 @@
+import base64
+import io
 import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
-from voice_listener import play_audio, render_voice_listener
+from gtts import gTTS
+from streamlit_mic_recorder import speech_to_text
 
 st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
@@ -24,15 +27,34 @@ for i in range(1, 6):
     if f"y_{i}" not in st.session_state:
         st.session_state[f"y_{i}"] = ""
 
-# Capture values directly out of the component channel
-voice_data = render_voice_listener()
+# --- 🎙️ Native Streamlit Speech to Text Engine Component ---
+st.subheader("🎙️ Hands-Free Voice Input")
+st.write(
+    "Tap the microphone button, speak clearly (e.g., *'Spawn 2, 400, 800'*), then tap it again to stop and update."
+)
 
-# FIXED: Strict type enforcement block to isolate calculation triggers safely
-if isinstance(voice_data, dict) and "v_id" in voice_data:
-    v_id = voice_data["v_id"]
-    st.session_state[f"x_{v_id}"] = voice_data["v_x"]
-    st.session_state[f"y_{v_id}"] = voice_data["v_y"]
-    st.rerun()
+# Renders a stable native voice recording node button
+spoken_text = speech_to_text(
+    start_prompt="🎙️ Start Listening",
+    stop_prompt="🛑 Stop & Process",
+    language="en",
+    key="voice_input_engine",
+)
+
+# Parse incoming spoken phrases safely using standard regex capture group checks
+if spoken_text:
+    clean_text = str(spoken_text).lower().strip()
+    match = parse = np.core.defchararray.replace(
+        clean_text, ",", ""
+    )  # Strip out optional punctuation pauses
+    import re
+
+    extracted = re.search(r"spawn\s*([1-5])\s*(\d{1,4})\s*(\d{1,4})", clean_text)
+    if extracted:
+        v_id = extracted.group(1)
+        st.session_state[f"x_{v_id}"] = extracted.group(2)
+        st.session_state[f"y_{v_id}"] = extracted.group(3)
+        st.rerun()
 
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6):
@@ -53,6 +75,7 @@ def get_coord(val_string):
     return None
 
 
+# Clean columns completely intact for standard grid typing or voice updates
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
         col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
@@ -104,7 +127,17 @@ if len(spawns) > 0:
             f"🎯 **Teleport here:** X: {target_x}, Y: {target_y} ({int(round(dist[idx]))} km from Hive)"
         )
 
-        play_audio(target_x, target_y)
+        # 🔊 Autoplay Audio Output Channel
+        phrase = f"coords, {target_x}, {target_y}. ... {target_x}, {target_y}."
+        tts = gTTS(text=phrase, lang="en", tld="com", slow=False)
+        audio_fp = io.BytesIO()
+        tts.write_to_fp(audio_fp)
+        audio_fp.seek(0)
+        b64 = base64.b64encode(audio_fp.read()).decode()
+        st.markdown(
+            f'<audio src="data:audio/mp3;base64,{b64}" autoplay style="display:none;"></audio>',
+            unsafe_allow_html=True,
+        )
         target_data = pd.DataFrame(
             [{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯"}]
         )
