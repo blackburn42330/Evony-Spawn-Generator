@@ -13,19 +13,39 @@ def render_voice_listener():
         statusBox.addEventListener('click', () => {
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRec) { statusBox.innerText = "❌ Browser Profile Blocks Speech Recognition API."; return; }
+            
             const engine = new SpeechRec();
             engine.continuous = true;
             engine.interimResults = false;
             engine.lang = 'en-US';
+            
             engine.onstart = () => {
                 statusBox.innerHTML = "🟢 LISTENING: Call out 'Spawn [1-5] X Y' hands-free...";
                 statusBox.style.color = "#00FF00"; statusBox.style.background = "rgba(0,255,0,0.08)"; statusBox.style.borderColor = "#00FF00";
             };
+            
             engine.onresult = (event) => {
                 const transcript = event.results[event.results.length - 1].transcript.toLowerCase();
                 const parse = transcript.match(/spawn\s*([1-5])\s*(\d{1,4})\s*(\d{1,4})/);
                 if (parse) {
-                    window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + `?v_id=${parse[1]}&v_x=${parse[2]}&v_y=${parse[3]}`;
+                    const sNum = parse[1];
+                    const xVal = parse[2];
+                    const yVal = parse[3];
+                    
+                    // Native parent layout document target bridge injection
+                    const parentDoc = window.parent.document;
+                    const inputs = parentDoc.querySelectorAll('input[type="text"]');
+                    let found = false;
+                    
+                    inputs.forEach(input => {
+                        if(input.ariaLabel === 'S' + sNum + 'X') { input.value = xVal; input.dispatchEvent(new Event('input', { bubbles: true })); found = true; }
+                        if(input.ariaLabel === 'S' + sNum + 'Y') { input.value = yVal; input.dispatchEvent(new Event('input', { bubbles: true })); found = true; }
+                    });
+                    
+                    // Fallback URL processor route if direct input indexing isn't found
+                    if (!found) {
+                        window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + `?v_id=${sNum}&v_x=${xVal}&v_y=${yVal}`;
+                    }
                 }
             };
             engine.onerror = () => { engine.start(); };
