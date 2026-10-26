@@ -1,7 +1,8 @@
-import streamlit as st
 import base64
 import io
+import streamlit as st
 from gtts import gTTS
+
 
 def render_voice_listener():
     html_code = """
@@ -12,7 +13,7 @@ def render_voice_listener():
         const statusBox = document.getElementById("mic-status");
         statusBox.addEventListener('click', () => {
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRec) { statusBox.innerText = "❌ Browser Profile Blocks Speech Recognition API."; return; }
+            if (!SpeechRec) { statusBox.innerText = "❌ Speech API Blocked/Unsupported"; return; }
             
             const engine = new SpeechRec();
             engine.continuous = true;
@@ -32,20 +33,8 @@ def render_voice_listener():
                     const xVal = parse[2];
                     const yVal = parse[3];
                     
-                    // Native parent layout document target bridge injection
-                    const parentDoc = window.parent.document;
-                    const inputs = parentDoc.querySelectorAll('input[type="text"]');
-                    let found = false;
-                    
-                    inputs.forEach(input => {
-                        if(input.ariaLabel === 'S' + sNum + 'X') { input.value = xVal; input.dispatchEvent(new Event('input', { bubbles: true })); found = true; }
-                        if(input.ariaLabel === 'S' + sNum + 'Y') { input.value = yVal; input.dispatchEvent(new Event('input', { bubbles: true })); found = true; }
-                    });
-                    
-                    // Fallback URL processor route if direct input indexing isn't found
-                    if (!found) {
-                        window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + `?v_id=${sNum}&v_x=${xVal}&v_y=${yVal}`;
-                    }
+                    // Secure data highway routing directly via URL updates
+                    window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + `?v_id=${sNum}&v_x=${xVal}&v_y=${yVal}`;
                 }
             };
             engine.onerror = () => { engine.start(); };
@@ -56,11 +45,15 @@ def render_voice_listener():
     """
     st.components.v1.html(html_code, height=65)
 
+
 def play_audio(target_x, target_y):
     phrase = f"coords, {target_x}, {target_y}. ... {target_x}, {target_y}."
-    tts = gTTS(text=phrase, lang='en', tld='com', slow=False)
+    tts = gTTS(text=phrase, lang="en", tld="com", slow=False)
     audio_fp = io.BytesIO()
     tts.write_to_fp(audio_fp)
     audio_fp.seek(0)
     b64 = base64.b64encode(audio_fp.read()).decode()
-    st.markdown(f'<audio src="data:audio/mp3;base64,{b64}" autoplay style="display:none;"></audio>', unsafe_allow_html=True)
+    st.markdown(
+        f'<audio src="data:audio/mp3;base64,{b64}" autoplay style="display:none;"></audio>',
+        unsafe_allow_html=True,
+    )
