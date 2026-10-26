@@ -63,7 +63,7 @@ word_to_num = {
     "oh": "0",
 }
 
-# --- ⚡ FIXED: Corrected Slice Index Parsing ---
+# --- ⚡ Smart 3-Digit Tail Coordinate Parser Engine ---
 if spoken_text:
     clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
     words = clean_text.split()
@@ -74,7 +74,7 @@ if spoken_text:
     digits_only = re.sub(r"\D", "", processed_text)
 
     if len(digits_only) >= 5:
-        # FIXED: Extract ONLY the first digit character position [0] as the row tracker ID
+        # Extract ONLY the first digit character position as the row tracker ID
         v_id = digits_only[0]
         coords_tail = digits_only[1:]  # Rest of the string is X and Y smashed together
 
@@ -88,6 +88,7 @@ if spoken_text:
 
         if v_id in ["1", "2", "3", "4", "5"]:
             try:
+                # Update session state values safely directly into their mapped elements
                 st.session_state[f"x_{v_id}"] = str(int(v_x))
                 st.session_state[f"y_{v_id}"] = str(int(v_y))
                 st.rerun()
@@ -127,24 +128,21 @@ for i in range(1, 6):
                 unsafe_allow_html=True,
             )
 
+        # FIXED: Bound keys directly to state storage trackers and remove trailing assignment overrides
         with col_a:
             x_in = st.text_input(
                 f"S{i}X",
-                value=st.session_state[f"x_{i}"],
-                key=f"field_x_{i}",
+                key=f"x_{i}",
                 placeholder="X...",
                 label_visibility="collapsed",
             )
-            st.session_state[f"x_{i}"] = x_in
         with col_b:
             y_in = st.text_input(
                 f"S{i}Y",
-                value=st.session_state[f"y_{i}"],
-                key=f"field_y_{i}",
+                key=f"y_{i}",
                 placeholder="Y...",
                 label_visibility="collapsed",
             )
-            st.session_state[f"y_{i}"] = y_in
 
         x_val, y_val = get_coord(x_in), get_coord(y_in)
         if x_val is not None and y_val is not None:
