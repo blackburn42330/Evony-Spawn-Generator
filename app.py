@@ -4,7 +4,7 @@ from gtts import gTTS
 st.set_page_config(page_title="Voice Companion", layout="centered")
 st.title("🎙️ NCI Voice Spawn Companion")
 st.markdown("<div style='color:#FFD700;font-size:22px;font-weight:bold;'>✨ BBR is an app writing genius ✨</div>", unsafe_allow_html=True)
-st.write("Place your phone next to your iPad. Speak: **'Spawn [1-5] [X] [Y]'** (e.g., *'Spawn 2, 350, 800'*). Tap once to activate microphone tracking.")
+st.write("Place phone next to iPad. Speak: **'Spawn [1-5] [X] [Y]'** (e.g., *'Spawn 2, 350, 800'*). Tap text to activate mic.")
 
 HIVE_X, HIVE_Y = 356, 721
 
@@ -12,9 +12,9 @@ for i in range(1, 6):
     if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
     if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
 
-# 🔊 Invisible Background Web Speech API Listening Engine
+# 🔊 Invisible Web Speech API Listening Engine (Fixed String Passing Arguments)
 st.components.v1.html("""
-    <div id="lis" style="color:#FFD700;font-weight:bold;padding:10px;background:rgba(255,215,0,0.1);border-radius:5px;text-align:center;font-family:sans-serif;">🔴 Microphone Standby (Tap screen once to wake up voice listener)</div>
+    <div id="lis" style="color:#FFD700;font-weight:bold;padding:10px;background:rgba(255,215,0,0.1);border-radius:5px;text-align:center;font-family:sans-serif;cursor:pointer;">🔴 Microphone Standby (Tap screen once to wake up voice listener)</div>
     <script>
         window.addEventListener('click', () => {
             const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -22,9 +22,11 @@ st.components.v1.html("""
             const rec = new Rec(); rec.continuous = true; rec.lang = 'en-US';
             rec.onstart = () => { let l = document.getElementById("lis"); l.innerText = "🟢 ACTIVE LISTENING: Say 'Spawn [1-5] X Y'..."; l.style.color = "#00FF00"; l.style.background = "rgba(0,255,0,0.1)"; };
             rec.onresult = (e) => {
-                const text = e.results[e.results.length - 1][0].transcript.toLowerCase();
+                const text = e.results[e.results.length - 1].transcript.toLowerCase();
                 const m = text.match(/spawn\s*([1-5])\s*(\d{1,4})\s*(\d{1,4})/);
-                if (m) window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + `?u=${m[1]}&x=${m[2]}&y=${m[3]}`;
+                if (m) {
+                    window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + `?u=${m[1]}&x=${m[2]}&y=${m[3]}`;
+                }
             };
             rec.onerror = () => rec.start(); rec.onend = () => rec.start(); rec.start();
         }, { once: true });
@@ -43,7 +45,7 @@ spawns = []
 st.subheader("📍 Monitored Spawns")
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        col_lbl, col_a, col_b = st.columns([1.5, 1.5, 7])
+        col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
         with col_lbl: st.markdown(f"<div style='padding-top:6px;font-weight:bold;'>Spawn {i}</div>", unsafe_allow_html=True)
         with col_a: x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"x_{i}", label_visibility="collapsed", placeholder="X")
         with col_b: y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", label_visibility="collapsed", placeholder="Y")
@@ -77,7 +79,7 @@ if spawns:
         t_df = pd.DataFrame([{"X": tx-ty, "Y": tx+ty, "E": "🎯"}])
     else: st.error("❌ No safe coordinates found within constraints.")
 
-# --- Compressed Mapping Visualization Layer ---
+# --- Mapping Visualization Layer ---
 m_x_iso, max_x_iso = (520 - 350) - (600 + 350), (520 + 350) - (600 - 350)
 m_y_iso, max_y_iso = (520 - 350) + (600 - 350), (520 + 350) + (600 + 350)
 xs, ys = alt.Scale(domain=[m_x_iso, max_x_iso]), alt.Scale(domain=[m_y_iso, max_y_iso], reverse=True)
