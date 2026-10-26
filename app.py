@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import altair as alt
+import urllib.parse
 
 st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
@@ -16,7 +17,7 @@ st.markdown("""
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
     
-    /* Styled custom action button layout */
+    /* Styled custom audio player action button */
     .voice-btn {
         display: block; width: 100%; font-size: 20px !important; font-weight: bold !important; 
         padding: 12px 24px !important; text-align: center; border-radius: 8px !important; 
@@ -92,21 +93,16 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🔊 Direct Markdown Injection Button to unlock voice channel natively on mobile engines
-        voice_button_html = f"""
-        <button class="voice-btn" onclick="
-            if ('speechSynthesis' in window) {{
-                window.speechSynthesis.cancel();
-                var msg = new SpeechSynthesisUtterance('teleport to coordinates x {target_x} y {target_y}');
-                msg.rate = 1.0;
-                msg.pitch = 1.0;
-                window.speechSynthesis.speak(msg);
-            }} else {{
-                alert('Speech Engine Blocked');
-            }}
-        ">🔊 Hear Next Target Coordinates</button>
+        # 🔊 HTML5 Live-Stream Audio Narration Pipeline
+        narration_phrase = f"teleport to coordinates x {target_x} y {target_y}"
+        encoded_phrase = urllib.parse.quote_plus(narration_phrase)
+        audio_stream_url = f"https://google.com{encoded_phrase}"
+        
+        voice_player_html = f"""
+        <button class="voice-btn" onclick="document.getElementById('spawn-audio-engine').play();">🔊 Hear Next Target Coordinates</button>
+        <audio id="spawn-audio-engine" src="{audio_stream_url}" preload="auto"></audio>
         """
-        st.markdown(voice_button_html, unsafe_allow_html=True)
+        st.markdown(voice_player_html, unsafe_allow_html=True)
         
         st.write("**Spawn Distances from Hive:**")
         dist_strings = []
