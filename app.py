@@ -85,9 +85,9 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🔊 British Voice Audio Engine (tld='co.uk')
+        # 🔊 Australian Voice Audio Engine (tld='com.au')
         narration_phrase = f"coords, {target_x}, {target_y}. ... {target_x}, {target_y}."
-        tts = gTTS(text=narration_phrase, lang='en', tld='co.uk', slow=False)
+        tts = gTTS(text=narration_phrase, lang='en', tld='com.au', slow=False)
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
         audio_fp.seek(0)
