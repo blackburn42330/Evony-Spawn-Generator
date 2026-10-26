@@ -4,6 +4,7 @@ import pandas as pd
 import altair as alt
 from gtts import gTTS
 import io
+import base64
 
 st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
@@ -84,29 +85,20 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🔊 Dynamic Audio Pipeline Fix using getvalue()
+        # 🔊 iOS Autoplay Compliant Engine
         narration_phrase = f"teleport to coordinates x {target_x} y {target_y}"
         tts = gTTS(text=narration_phrase, lang='en', slow=False)
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
+        audio_fp.seek(0)
         
+        # Encode audio into a direct data string to bypass browser sandboxing restrictions
+        b64_audio = base64.b64encode(audio_fp.read()).decode()
+        audio_data_uri = f"data:audio/mp3;base64,{b64_audio}"
+        
+        # Render a hidden native HTML5 element with the controls visible as a backup fallback
         st.write("🔊 **Voice Narration Track:**")
-        
-        # FIXED: getvalue() cleanly pulls bytes without requiring a pointer reset
-        audio_key = f"audio_{target_x}_{target_y}"
-        st.audio(audio_fp.getvalue(), format="audio/mp3", key=audio_key)
-        
-        # Inline JavaScript script targeting all parent audio components
-        autoplay_html = f"""
-        <script>
-            window.parent.document.querySelectorAll('audio').forEach(function(audioTag) {{
-                audioTag.play().catch(function(err) {{
-                    console.log("Autoplay caught or waiting for first interaction baseline.");
-                }});
-            }});
-        </script>
-        """
-        st.components.v1.html(autoplay_html, height=0, width=0)
+        st.markdown(f'<audio src="{audio_data_uri}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
         
         st.write("**Spawn Distances from Hive:**")
         dist_strings = []
