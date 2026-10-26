@@ -37,6 +37,13 @@ for i in range(1, 6):
 
 st.subheader("🎙️ Hands-Free Voice Input")
 
+spoken_text = speech_to_text(
+    start_prompt="🎙️ Start Listening",
+    stop_prompt="🛑 Stop & Process",
+    language="en",
+    key="voice_input_engine",
+)
+
 # Text-to-Number Word Translation Dictionary to handle mobile voice streams
 word_to_num = {
     "one": "1",
@@ -58,55 +65,37 @@ word_to_num = {
 
 
 # --- ⚡ FIXED: Clean Array Index Parsing Pipeline ---
-def process_voice_input():
-    active_key = f"voice_engine_{st.session_state.get('active_voice_key_idx', 0)}"
-    spoken_text = st.session_state.get(active_key)
+if spoken_text:
+    clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
+    words = clean_text.split()
+    translated_words = [word_to_num.get(w, w) for w in words]
+    processed_text = " ".join(translated_words)
 
-    if spoken_text:
-        clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
-        words = clean_text.split()
-        translated_words = [word_to_num.get(w, w) for w in words]
-        processed_text = " ".join(translated_words)
+    # Pull out standalone digits out of the spoken voice data
+    all_numbers = re.findall(r"\d+", processed_text)
 
-        # Pull out standalone digits out of the spoken voice data
-        all_numbers = re.findall(r"\d+", processed_text)
+    # FIXED: Extract correct array indices sequentially from the regex match list
+    if len(all_numbers) >= 3:
+        v_id = str(all_numbers[0]).strip()
+        v_x = str(all_numbers[1]).strip()
+        v_y = str(all_numbers[2]).strip()
 
-        # FIXED: Extract clean sequence items out of the list matches safely using individual indexing positions
-        if len(all_numbers) >= 3:
-            v_id = str(all_numbers[0]).strip()
-            v_x = str(all_numbers[1]).strip()
-            v_y = str(all_numbers[2]).strip()
-
-            if v_id in ["1", "2", "3", "4", "5"]:
-                try:
-                    # Update session state values safely
-                    st.session_state[f"x_{v_id}"] = str(int(v_x))
-                    st.session_state[f"y_{v_id}"] = str(int(v_y))
-                except (ValueError, IndexError):
-                    pass
-
-
-# Keep count of populated data spawns to feed a dynamic shifting component key layout configuration
-temp_spawns_count = 0
-for i in range(1, 6):
-    if st.session_state[f"x_{i}"] and st.session_state[f"y_{i}"]:
-        temp_spawns_count += 1
-
-st.session_state["active_voice_key_idx"] = temp_spawns_count
-dynamic_engine_key = f"voice_engine_{temp_spawns_count}"
-
-speech_to_text(
-    start_prompt="🎙️ Start Listening",
-    stop_prompt="🛑 Stop & Process",
-    language="en",
-    key=dynamic_engine_key,
-    callback=process_voice_input,
-)
+        if v_id in ["1", "2", "3", "4", "5"]:
+            try:
+                # Update session state values safely
+                st.session_state[f"x_{v_id}"] = str(int(v_x))
+                st.session_state[f"y_{v_id}"] = str(int(v_y))
+                st.rerun()
+            except (ValueError, IndexError):
+                pass
+    else:
+        st.error(
+            f"❌ Could not isolate 3 clear digits. Engine translated speech to: '{processed_text}'"
+        )
 
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6):
         st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
-    st.session_state["active_voice_key_idx"] = 0
     st.rerun()
 
 st.subheader("📍 Active Spawns")
