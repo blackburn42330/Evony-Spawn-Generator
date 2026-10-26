@@ -22,32 +22,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.")
-
-st.markdown("### 🎙️ Sandbox Voice Settings")
-voice_selection = st.selectbox("Select Narration Profile / Accent Engine:", options=[
-    "🇺🇸 English (United States)", "🇦🇺 English (Australia)", "🇬🇧 English (United Kingdom)", 
-    "🇨🇦 English (Canada)", "🇮🇳 English (India)", "🇮🇪 English (Ireland)", 
-    "🇳🇿 English (New Zealand)", "🇿🇦 English (South Africa)", "🇲🇾 English (Malaysia)",
-    "🇪🇸 Spanish (Spain Numbers)", "🇫🇷 French (France Numbers)", "🇩🇪 German (Germany Numbers)"
-], index=0)
-
-voice_config = {
-    "🇺🇸 English (United States)":   {"lang": "en", "tld": "com",    "intro": "coords"},
-    "🇦🇺 English (Australia)":       {"lang": "en", "tld": "com.au", "intro": "coords"},
-    "🇬🇧 English (United Kingdom)":   {"lang": "en", "tld": "co.uk",  "intro": "coords"},
-    "🇨🇦 English (Canada)":          {"lang": "en", "tld": "ca",     "intro": "coords"},
-    "🇮🇳 English (India)":           {"lang": "en", "tld": "co.in",  "intro": "coords"},
-    "🇮🇪 English (Ireland)":          {"lang": "en", "tld": "ie",     "intro": "coords"},
-    "🇳🇿 English (New Zealand)":      {"lang": "en", "tld": "co.nz",  "intro": "coords"},
-    "🇿🇦 English (South Africa)":     {"lang": "en", "tld": "co.za",  "intro": "coords"},
-    "🇲🇾 English (Malaysia)":         {"lang": "en", "tld": "com.my", "intro": "coords"},
-    "🇪🇸 Spanish (Spain Numbers)":   {"lang": "es", "tld": "es",     "intro": "coordenadas"},
-    "🇫🇷 French (France Numbers)":   {"lang": "fr", "tld": "fr",     "intro": "coordonnées"},
-    "🇩🇪 German (Germany Numbers)":   {"lang": "de", "tld": "de",     "intro": "koordinaten"}
-}
-
-cfg = voice_config[voice_selection]
-st.write("---")
+st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the fields side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -69,13 +44,15 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
+# --- Native Responsive Layout Generation ---
 for i in range(1, 6):
-    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
+    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]) :
         col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
         with col_lbl:
             st.markdown(f"<div style='padding-top: 6px; font-weight: bold; font-size:15px; white-space: nowrap;'>Spawn {i}</div>", unsafe_allow_html=True)
         with col_a: x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...", label_visibility="collapsed")
         with col_b: y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...", label_visibility="collapsed")
+        
         x_val, y_val = get_coord(x_in), get_coord(y_in)
         if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
 
@@ -103,9 +80,9 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # Audio generation logic
-        phrase = f"{cfg['intro']}, {target_x}, {target_y}. ... {target_x}, {target_y}."
-        tts = gTTS(text=phrase, lang=cfg["lang"], tld=cfg["tld"], slow=False)
+        # 🔊 Crisp US Audio Narration with "coords" on the 1st cycle and raw repeat on the 2nd
+        phrase = f"coords, {target_x}, {target_y}. ... {target_x}, {target_y}."
+        tts = gTTS(text=phrase, lang='en', tld='com', slow=False)
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
         audio_fp.seek(0)
@@ -146,7 +123,7 @@ danger_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=[
 
 x_scale, y_scale = alt.Scale(domain=[min_x_iso, max_x_iso]), alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
 
-# Compact loop definitions for the chart layers to prevent character layout overflows
+# Compact layer organization array mapping
 layers = [
     alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N']),
     alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']),
