@@ -37,13 +37,6 @@ for i in range(1, 6):
 
 st.subheader("🎙️ Hands-Free Voice Input")
 
-spoken_text = speech_to_text(
-    start_prompt="🎙️ Start Listening",
-    stop_prompt="🛑 Stop & Process",
-    language="en",
-    key="voice_input_engine",
-)
-
 # Text-to-Number Word Translation Dictionary to handle mobile voice streams
 word_to_num = {
     "one": "1",
@@ -64,23 +57,29 @@ word_to_num = {
 }
 
 
-# --- ⚡ FIXED: Clean Array Index Parsing Pipeline ---
+# --- ⚡ FIXED: Robust Voice Processing Pipeline with Clear Global Array Formatting Keys ---
 def process_voice_input():
-    spoken_text = st.session_state.get("voice_input_engine")
+    # Dynamic unique key identification query loop matching the layout execution parameter context
+    active_key = f"voice_engine_{st.session_state.get('active_voice_key_idx', 0)}"
+    spoken_text = st.session_state.get(active_key)
+
     if spoken_text:
+        # 1. Standardize text structure completely
         clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
+
+        # 2. Convert text numbers to regular digits
         words = clean_text.split()
         translated_words = [word_to_num.get(w, w) for w in words]
         processed_text = " ".join(translated_words)
 
-        # Pull out standalone digits out of the spoken voice data
+        # 3. Pull out ALL standalone number fragments from the text block sequentially
         all_numbers = re.findall(r"\d+", processed_text)
 
-        # FIXED: Extract clean sequence items out of the list matches safely
+        # 4. FIXED: Safe indexing parsing numbers directly out of string element blocks
         if len(all_numbers) >= 3:
-            v_id = str(all_numbers[0]).strip()
-            v_x = str(all_numbers[1]).strip()
-            v_y = str(all_numbers[2]).strip()
+            v_id = re.sub(r"\s+", "", str(all_numbers[0]))
+            v_x = re.sub(r"\s+", "", str(all_numbers[1]))
+            v_y = re.sub(r"\s+", "", str(all_numbers[2]))
 
             if v_id in ["1", "2", "3", "4", "5"]:
                 try:
@@ -90,19 +89,27 @@ def process_voice_input():
                     pass
 
 
-# Render microphone component bound natively to our instant callback routine
+# Keep count of populated data spawns to feed a dynamic shifting component key layout configuration
+temp_spawns_count = 0
+for i in range(1, 6):
+    if st.session_state[f"x_{i}"] and st.session_state[f"y_{i}"]:
+        temp_spawns_count += 1
+
+st.session_state["active_voice_key_idx"] = temp_spawns_count
+dynamic_engine_key = f"voice_engine_{temp_spawns_count}"
+
+# FIXED: Render microphone component using our dynamic shifting key logic to stop DuplicateElement errors
 speech_to_text(
     start_prompt="🎙️ Start Listening",
     stop_prompt="🛑 Stop & Process",
     language="en",
-    key="voice_input_engine",
+    key=dynamic_engine_key,
     callback=process_voice_input,
 )
 
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6):
         st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
-    st.session_state["voice_input_engine"] = ""
     st.rerun()
 
 st.subheader("📍 Active Spawns")
