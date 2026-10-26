@@ -93,9 +93,9 @@ if len(spawns) > 0:
         
         st.write("🔊 **Voice Narration Track:**")
         
-        # Unique coordinate-bound key forces component re-mount and triggers playback
+        # FIXED: Added .read() to extract raw bytes instead of passing the pointer object
         audio_key = f"audio_{target_x}_{target_y}"
-        st.audio(audio_fp, format="audio/mp3", key=audio_key)
+        st.audio(audio_fp.read(), format="audio/mp3", key=audio_key)
         
         # Inline JavaScript script targeting all parent audio components
         autoplay_html = f"""
