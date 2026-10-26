@@ -1,5 +1,6 @@
-gtts
 streamlit
+streamlit-mic-recorder
+gtts
 numpy
 pandas
 altair
