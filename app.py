@@ -63,7 +63,7 @@ word_to_num = {
     "oh": "0",
 }
 
-# --- ⚡ FIXED: Precise String Character Slicing Parser ---
+# --- ⚡ FIXED: Corrected Slice Index Parsing ---
 if spoken_text:
     clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
     words = clean_text.split()
@@ -74,7 +74,7 @@ if spoken_text:
     digits_only = re.sub(r"\D", "", processed_text)
 
     if len(digits_only) >= 5:
-        # FIXED: Extract ONLY the single first digit character out of the string matrix index as the row tracker ID
+        # FIXED: Extract ONLY the first digit character position [0] as the row tracker ID
         v_id = digits_only[0]
         coords_tail = digits_only[1:]  # Rest of the string is X and Y smashed together
 
