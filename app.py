@@ -37,13 +37,6 @@ for i in range(1, 6):
 
 st.subheader("🎙️ Hands-Free Voice Input")
 
-spoken_text = speech_to_text(
-    start_prompt="🎙️ Start Listening",
-    stop_prompt="🛑 Stop & Process",
-    language="en",
-    key="voice_input_engine",
-)
-
 # Text-to-Number Word Translation Dictionary to handle mobile voice streams
 word_to_num = {
     "one": "1",
@@ -63,34 +56,44 @@ word_to_num = {
     "oh": "0",
 }
 
-if spoken_text:
-    # 1. Standardize text structure completely
-    clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
 
-    # 2. Convert text numbers to regular digits
-    words = clean_text.split()
-    translated_words = [word_to_num.get(w, w) for w in words]
-    processed_text = " ".join(translated_words)
+# --- ⚡ FIXED: Native Callback State Processing Engine Pipeline ---
+def process_voice_input():
+    # Safely pull the text string directly out of the component's internal state widget
+    spoken_text = st.session_state.get("voice_input_engine")
+    if spoken_text:
+        # 1. Standardize text structure completely
+        clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
 
-    # 3. Pull out ALL standalone numbers from the text block sequentially
-    all_numbers = re.findall(r"\d+", processed_text)
+        # 2. Convert text numbers to regular digits
+        words = clean_text.split()
+        translated_words = [word_to_num.get(w, w) for w in words]
+        processed_text = " ".join(translated_words)
 
-    # 4. Correctly lock each extracted digit group into Session State safely
-    if len(all_numbers) >= 3:
-        v_id = all_numbers[0]
-        # Ensure the stated index matches our valid 1-5 range layout limits
-        if v_id in ["1", "2", "3", "4", "5"]:
-            st.session_state[f"x_{v_id}"] = all_numbers[1]
-            st.session_state[f"y_{v_id}"] = all_numbers[2]
-            st.rerun()
-    else:
-        st.error(
-            f"❌ Could not isolate 3 clear digits. Engine translated speech to: '{processed_text}'"
-        )
+        # 3. Pull out ALL standalone numbers from the text block sequentially
+        all_numbers = re.findall(r"\d+", processed_text)
+
+        # 4. Correctly lock each extracted digit group into Session State safely
+        if len(all_numbers) >= 3:
+            v_id = all_numbers[0]
+            if v_id in ["1", "2", "3", "4", "5"]:
+                st.session_state[f"x_{v_id}"] = all_numbers[1]
+                st.session_state[f"y_{v_id}"] = all_numbers[2]
+
+
+# Render microphone component bound natively to our instant callback routine
+speech_to_text(
+    start_prompt="🎙️ Start Listening",
+    stop_prompt="🛑 Stop & Process",
+    language="en",
+    key="voice_input_engine",
+    callback=process_voice_input,
+)
 
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6):
         st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
+    st.session_state["voice_input_engine"] = ""
     st.rerun()
 
 st.subheader("📍 Active Spawns")
