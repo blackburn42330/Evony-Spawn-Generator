@@ -96,7 +96,24 @@ if len(spawns) > 0:
         
         b64 = base64.b64encode(audio_fp.read()).decode()
         st.write("🔊 **Voice Narration Track:**")
-        st.markdown(f'<audio src="data:audio/mp3;base64,{b64}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
+        
+        # Unique target identification key tracking elements cleanly
+        audio_el_id = f"audio_{target_x}_{target_y}"
+        st.markdown(f'<audio id="{audio_el_id}" src="data:audio/mp3;base64,{b64}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
+        
+        # ⚡ Inject JavaScript injection loop modifying speed metrics by exactly 5%
+        speed_control_html = f"""
+        <script>
+            setTimeout(() => {{
+                const parentDoc = window.parent.document;
+                const audioTag = parentDoc.getElementById("{audio_el_id}");
+                if (audioTag) {{
+                    audioTag.playbackRate = 1.05;
+                }}
+            }}, 100);
+        </script>
+        """
+        st.components.v1.html(speed_control_html, height=0, width=0)
         
         st.write("**Spawn Distances from Hive:**")
         dist_strings = [f"**Spawn {idx}:** {int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]
