@@ -4,7 +4,7 @@ import pandas as pd
 import altair as alt
 
 st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
-st.title("🥷 NCI Spawn Generator")
+st.title("🥷 NCI Spawn Calculator")
 
 st.markdown("""
     <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
