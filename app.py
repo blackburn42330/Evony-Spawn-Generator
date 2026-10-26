@@ -84,18 +84,17 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🔊 Trusted Native Audio Component Pipeline + Autoplay Bypass
+        # 🔊 Dynamic Audio Pipeline Fix using getvalue()
         narration_phrase = f"teleport to coordinates x {target_x} y {target_y}"
         tts = gTTS(text=narration_phrase, lang='en', slow=False)
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
-        audio_fp.seek(0)
         
         st.write("🔊 **Voice Narration Track:**")
         
-        # FIXED: Added .read() to extract raw bytes instead of passing the pointer object
+        # FIXED: getvalue() cleanly pulls bytes without requiring a pointer reset
         audio_key = f"audio_{target_x}_{target_y}"
-        st.audio(audio_fp.read(), format="audio/mp3", key=audio_key)
+        st.audio(audio_fp.getvalue(), format="audio/mp3", key=audio_key)
         
         # Inline JavaScript script targeting all parent audio components
         autoplay_html = f"""
