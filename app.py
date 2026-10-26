@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import altair as alt
 
-st.set_page_config(page_title="Evony Spawn Generator", layout="centered")
+st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
 
 st.markdown("""
