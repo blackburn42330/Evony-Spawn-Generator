@@ -63,25 +63,28 @@ word_to_num = {
     "oh": "0",
 }
 
-# --- ⚡ FIXED: Clean List Array Index Parsing Pipeline ---
+# --- ⚡ FIXED: Smart Digit-Chopper Parser Engine ---
 if spoken_text:
     clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
     words = clean_text.split()
     translated_words = [word_to_num.get(w, w) for w in words]
     processed_text = " ".join(translated_words)
 
-    # Pull out standalone digits out of the spoken voice data array
-    all_numbers = re.findall(r"\d+", processed_text)
+    # Strip ALL spaces and text characters to get one giant string of raw digits
+    digits_only = re.sub(r"\D", "", processed_text)
 
-    # FIXED: Direct list sequence item indexing safely extracted by position index array parameters
-    if len(all_numbers) >= 3:
-        v_id = str(all_numbers[0]).strip()
-        v_x = str(all_numbers[1]).strip()
-        v_y = str(all_numbers[2]).strip()
+    # Must have at least a Spawn ID (1 digit) and squished X/Y coordinates (at least 4 digits total)
+    if len(digits_only) >= 5:
+        v_id = digits_only[0]  # First digit is the Spawn ID (1-5)
+        coords_tail = digits_only[1:]  # Everything else is X and Y smashed together
+
+        # Split the remaining coordinates block directly in half
+        half = len(coords_tail) // 2
+        v_x = coords_tail[:half]
+        v_y = coords_tail[half:]
 
         if v_id in ["1", "2", "3", "4", "5"]:
             try:
-                # Assign values cleanly directly into session state storage vectors
                 st.session_state[f"x_{v_id}"] = str(int(v_x))
                 st.session_state[f"y_{v_id}"] = str(int(v_y))
                 st.rerun()
@@ -89,7 +92,7 @@ if spoken_text:
                 pass
     else:
         st.error(
-            f"❌ Could not isolate 3 clear digits. Engine translated speech to: '{processed_text}'"
+            f"❌ Could not isolate enough digits. Engine translated speech to: '{processed_text}'"
         )
 
 if st.button("🗑️ Clear All Fields"):
