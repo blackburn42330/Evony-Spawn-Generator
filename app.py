@@ -27,15 +27,21 @@ st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first mo
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
-if st.button("🗑️ Clear All Fields"):
-    for i in range(1, 6): st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
-    st.rerun()
-
-st.subheader("📍 Active Spawns")
+# Initialize inputs inside state loops cleanly
 for i in range(1, 6):
     if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
     if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
 
+# Memory Clear Loop Engine
+if st.button("🗑️ Clear All Fields"):
+    for i in range(1, 6):
+        st.session_state[f"x_{i}"] = ""
+        st.session_state[f"y_{i}"] = ""
+        if f"field_x_{i}" in st.session_state: st.session_state[f"field_x_{i}"] = ""
+        if f"field_y_{i}" in st.session_state: st.session_state[f"field_y_{i}"] = ""
+    st.rerun()
+
+st.subheader("📍 Active Spawns")
 spawns = []
 def get_coord(val_string):
     try:
@@ -50,8 +56,12 @@ for i in range(1, 6):
         col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
         with col_lbl:
             st.markdown(f"<div style='padding-top: 6px; font-weight: bold; font-size:15px; white-space: nowrap;'>Spawn {i}</div>", unsafe_allow_html=True)
-        with col_a: x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...", label_visibility="collapsed")
-        with col_b: y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...", label_visibility="collapsed")
+        with col_a: 
+            x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"field_x_{i}", placeholder="X...", label_visibility="collapsed")
+            st.session_state[f"x_{i}"] = x_in
+        with col_b: 
+            y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"field_y_{i}", placeholder="Y...", label_visibility="collapsed")
+            st.session_state[f"y_{i}"] = y_in
         
         x_val, y_val = get_coord(x_in), get_coord(y_in)
         if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
@@ -80,8 +90,20 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🔊 Crisp US Audio Narration with "coords" on the 1st cycle and raw repeat on the 2nd
-        phrase = f"coords, {target_x}, {target_y}. ... {target_x}, {target_y}."
+        # ⚡ FIXED: Clean split formatter (e.g. 355 becomes "3 55", which speaks as "three fifty-five")
+        def fmt_tts(num):
+            s = str(num)
+            if len(s) == 3:
+                # Handles clean "zero" pacing for targets like 705 ("7 0 5")
+                if s[1] == '0':
+                    return f"{s[0]} zero {s[2]}"
+                return f"{s[0]} {s[1:]}"
+            return " ".join(list(s))
+
+        speech_x = fmt_tts(target_x)
+        speech_y = fmt_tts(target_y)
+        phrase = f"coords, {speech_x}, {speech_y}. ... {speech_x}, {speech_y}."
+        
         tts = gTTS(text=phrase, lang='en', tld='com', slow=False)
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
@@ -89,7 +111,21 @@ if len(spawns) > 0:
         
         b64 = base64.b64encode(audio_fp.read()).decode()
         st.write("🔊 **Voice Narration Track:**")
-        st.markdown(f'<audio src="data:audio/mp3;base64,{b64}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
+        
+        audio_el_id = f"audio_{target_x}_{target_y}"
+        st.markdown(f'<audio id="{audio_el_id}" src="data:audio/mp3;base64,{b64}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
+        
+        # Speed modifier hack (5% increase)
+        speed_control_html = f"""
+        <script>
+            setTimeout(() => {{
+                const parentDoc = window.parent.document;
+                const audioTag = parentDoc.getElementById("{audio_el_id}");
+                if (audioTag) {{ audioTag.playbackRate = 1.05; }}
+            }}, 100);
+        </script>
+        """
+        st.components.v1.html(speed_control_html, height=0, width=0)
         
         st.write("**Spawn Distances from Hive:**")
         dist_strings = [f"**Spawn {idx}:** {int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]
@@ -123,15 +159,14 @@ danger_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=[
 
 x_scale, y_scale = alt.Scale(domain=[min_x_iso, max_x_iso]), alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
 
-# Compact layer organization array mapping
 layers = [
-    alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N']),
-    alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']),
-    alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']),
-    alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']),
-    alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']),
-    alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']),
-    alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N', tooltip=['Label:N'])
+    alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None)),
+    alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N'),
+    alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N'),
+    alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N'),
+    alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N'),
+    alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N'),
+    alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N')
 ]
 
 chart = alt.layer(*layers).properties(width=700, height=500).configure_view(strokeOpacity=0)
