@@ -17,22 +17,25 @@ st.markdown(
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
-# Initialize fields inside session state cleanly
+# Initialize inputs inside state loops
 for i in range(1, 6):
     if f"x_{i}" not in st.session_state:
         st.session_state[f"x_{i}"] = ""
     if f"y_{i}" not in st.session_state:
         st.session_state[f"y_{i}"] = ""
 
-# Render the background voice component
+# Render browser listener
 render_voice_listener()
 
-# --- Catch incoming voice variables from the secure data highway route ---
+# --- ⚡ Stabilized State Pipeline Catch Array ---
+# Catches the variables from the URL parameter, locks them down, and clears parameters safely via a page rerun step
 if "v_id" in st.query_params:
     v_id = st.query_params["v_id"]
     st.session_state[f"x_{v_id}"] = st.query_params["v_x"]
     st.session_state[f"y_{v_id}"] = st.query_params["v_y"]
-    st.query_params.clear()  # Clear browser parameters cleanly to finalize update
+    # Clear parameters out of the URL string and force a single internal reload loop step to lock state down
+    st.query_params.clear()
+    st.rerun()
 
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6):
@@ -53,7 +56,7 @@ def get_coord(val_string):
     return None
 
 
-# Your standard layout is completely preserved for typing or viewing
+# Clean columns completely intact for standard grid typing or voice updates
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
         col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
