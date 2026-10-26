@@ -22,18 +22,16 @@ st.write(
     "Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals."
 )
 st.markdown(
-    "### 📋 Instructions:\n1. Type inputs normally using the side-by-side fields.\n2. **Optional Hands-Free:** Tap 'Start Listening', speak clearly (e.g., *'Spawn 1, 360, 700'*), and tap 'Stop & Process' to populate fields!"
+    "### 📋 Instructions:\n1. Type inputs using a space between coordinates (e.g., **'360 700'**).\n2. **Optional Hands-Free:** Tap 'Start Listening', speak clearly (e.g., *'Spawn 1, 360, 700'*), and tap 'Stop & Process' to populate fields!"
 )
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
-# Initialize inputs inside state loops cleanly
+# Initialize inputs inside single state tracking arrays cleanly
 for i in range(1, 6):
-    if f"x_{i}" not in st.session_state:
-        st.session_state[f"x_{i}"] = ""
-    if f"y_{i}" not in st.session_state:
-        st.session_state[f"y_{i}"] = ""
+    if f"spawn_{i}" not in st.session_state:
+        st.session_state[f"spawn_{i}"] = ""
 
 st.subheader("🎙️ Hands-Free Voice Input")
 
@@ -63,34 +61,31 @@ word_to_num = {
     "oh": "0",
 }
 
-# --- ⚡ Smart 3-Digit Tail Coordinate Parser Engine ---
+# --- ⚡ FIXED: Consolidated Space-Separated Single Input Parser ---
 if spoken_text:
     clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
     words = clean_text.split()
     translated_words = [word_to_num.get(w, w) for w in words]
     processed_text = " ".join(translated_words)
 
-    # Strip ALL spaces and text characters to get one giant string of raw digits
+    # Strip structural text but leave number blocks intact
     digits_only = re.sub(r"\D", "", processed_text)
 
     if len(digits_only) >= 5:
-        # Extract ONLY the first digit character position as the row tracker ID
-        v_id = digits_only[0]
+        v_id = digits_only[0]  # First digit is always your Spawn ID row (1-5)
         coords_tail = digits_only[1:]  # Rest of the string is X and Y smashed together
 
-        # Extract exactly the last 3 digits for Y, whatever is left over becomes X
+        # Extract coordinates sequentially based on fixed 3-digit tail bounds
         v_y = coords_tail[-3:]
         v_x = coords_tail[:-3]
 
-        # Auto-pad with a zero if the speech processor dropped a trailing zero (e.g. heard '35' instead of '350')
         if len(v_x) == 2:
             v_x = v_x + "0"
 
         if v_id in ["1", "2", "3", "4", "5"]:
             try:
-                # Update session state values safely directly into their mapped elements
-                st.session_state[f"x_{v_id}"] = str(int(v_x))
-                st.session_state[f"y_{v_id}"] = str(int(v_y))
+                # Merge the coordinates inside one clean field string to prevent layout conflicts
+                st.session_state[f"spawn_{v_id}"] = f"{int(v_x)} {int(v_y)}"
                 st.rerun()
             except (ValueError, IndexError):
                 pass
@@ -101,52 +96,35 @@ if spoken_text:
 
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6):
-        st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
+        st.session_state[f"spawn_{i}"] = ""
     st.rerun()
 
 st.subheader("📍 Active Spawns")
 spawns = []
 
-
-def get_coord(val_string):
-    try:
-        val = int(str(val_string).strip())
-        if 0 <= val <= 1200:
-            return val
-    except ValueError:
-        pass
-    return None
-
-
-# Clean columns completely intact for standard grid typing or voice updates
+# Consolidated interface loops rendering a single text field per spawn line
 for i in range(1, 6):
-    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
+    if i == 1 or st.session_state[f"spawn_{i-1}"]:
+        col_lbl, col_input = st.columns([1.5, 5.5], gap="small")
         with col_lbl:
             st.markdown(
                 f"<div style='padding-top: 6px; font-weight: bold;'>Spawn {i}</div>",
                 unsafe_allow_html=True,
             )
-
-        # FIXED: Bound keys directly to state storage trackers and remove trailing assignment overrides
-        with col_a:
-            x_in = st.text_input(
-                f"S{i}X",
-                key=f"x_{i}",
-                placeholder="X...",
-                label_visibility="collapsed",
-            )
-        with col_b:
-            y_in = st.text_input(
-                f"S{i}Y",
-                key=f"y_{i}",
-                placeholder="Y...",
+        with col_input:
+            raw_val = st.text_input(
+                f"S{i}",
+                key=f"spawn_{i}",
+                placeholder="Type 'X Y' (e.g. 360 700) or use microphone...",
                 label_visibility="collapsed",
             )
 
-        x_val, y_val = get_coord(x_in), get_coord(y_in)
-        if x_val is not None and y_val is not None:
-            spawns.append((x_val, y_val))
+        if raw_val:
+            parts = [int(s) for s in raw_val.split() if s.isdigit()]
+            if len(parts) >= 2:
+                x_val, y_val = parts[0], parts[1]
+                if 0 <= x_val <= 1200 and 0 <= y_val <= 1200:
+                    spawns.append((x_val, y_val))
 
 st.write("---")
 target_x, target_y = None, None
