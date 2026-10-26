@@ -1,39 +1,31 @@
-import base64
-import io
-import re
-import altair as alt
+import streamlit as st
 import numpy as np
 import pandas as pd
-import streamlit as st
+import altair as alt
 from gtts import gTTS
+import io
+import base64
+import re
 from streamlit_mic_recorder import speech_to_text
+from word2number import w2n
 
 st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
 
-st.markdown(
-    """
+st.markdown("""
     <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
-st.write(
-    "Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals."
-)
-st.markdown(
-    "### 📋 Instructions:\n1. Type inputs normally using the side-by-side fields.\n2. **Optional Hands-Free:** Tap 'Start Listening', speak clearly (e.g., *'Spawn 1, 360, 700'*), and tap 'Stop & Process' to populate fields!"
-)
+st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.")
+st.markdown("### 📋 Instructions:\n1. Type inputs normally using the side-by-side fields.\n2. **Optional Hands-Free:** Tap 'Start Listening', speak clearly (e.g., *'Spawn 1, 360, 700'*), and tap 'Stop & Process' to populate fields!")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
 # Initialize inputs inside state loops cleanly
 for i in range(1, 6):
-    if f"x_{i}" not in st.session_state:
-        st.session_state[f"x_{i}"] = ""
-    if f"y_{i}" not in st.session_state:
-        st.session_state[f"y_{i}"] = ""
+    if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
+    if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
 
 st.subheader("🎙️ Hands-Free Voice Input")
 
@@ -41,123 +33,80 @@ spoken_text = speech_to_text(
     start_prompt="🎙️ Start Listening",
     stop_prompt="🛑 Stop & Process",
     language="en",
-    key="voice_input_engine",
+    key="voice_input_engine"
 )
 
-# Text-to-Number Word Translation Dictionary to handle mobile voice streams
-word_to_num = {
-    "one": "1",
-    "two": "2",
-    "to": "2",
-    "too": "2",
-    "three": "3",
-    "four": "4",
-    "for": "4",
-    "five": "5",
-    "six": "6",
-    "seven": "7",
-    "eight": "8",
-    "ate": "8",
-    "nine": "9",
-    "zero": "0",
-    "oh": "0",
-    "hundred": "00",
-}
-
-# --- ⚡ FIXED: Smart Spacing Tokenizer Engine ---
+# --- ⚡ FIXED: Robust word2number Translation Processing Pipeline ---
 if spoken_text:
-    clean_text = (
-        str(spoken_text)
-        .lower()
-        .replace(",", " ")
-        .replace("-", " ")
-        .replace(" hundred", "00")
-        .strip()
-    )
-
-    # Inject explicit space characters between numbers smashed together by the speech API
-    clean_text = re.sub(r"(\d)([a-zA-Z])", r"\1 \2", clean_text)
-    clean_text = re.sub(r"([a-zA-Z])(\d)", r"\1 \2", clean_text)
-
-    words = clean_text.split()
-    translated_words = [word_to_num.get(w, w) for w in words]
-    processed_text = " ".join(translated_words)
-
-    # Force a space layout separation between trailing sequence elements if they are completely jammed together
-    processed_text = re.sub(r"(\d{3})(\d{3})", r"\1 \2", processed_text)
-    processed_text = re.sub(r"([1-5])(\d{3})", r"\1 \2", processed_text)
-
-    # Pull out standalone digit chunks now that spacing gaps are safely enforced
-    all_numbers = re.findall(r"\d+", processed_text)
-
-    if len(all_numbers) >= 3:
-        v_id = all_numbers[0]
-        v_x = all_numbers[1]
-        v_y = all_numbers[2]
-
+    # 1. Standardize voice text block format
+    clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
+    
+    # 2. Isolate the Spawn row index identifier number (1-5)
+    spawn_match = re.search(r"spawn\s*(\d+|one|two|three|four|five)", clean_text)
+    
+    if spawn_match:
+        raw_id = spawn_match.group(1)
+        # Parse target spawn index string safely
+        try: v_id = str(w2n.word_to_num(raw_id))
+        except: v_id = raw_id
+            
         if v_id in ["1", "2", "3", "4", "5"]:
-            try:
-                st.session_state[f"x_{v_id}"] = str(int(v_x))
-                st.session_state[f"y_{v_id}"] = str(int(v_y))
+            # Cut off the "spawn x" prefix to leave only coordinate phrases (e.g., "three sixty seven hundred")
+            coords_phrase = clean_text.split(spawn_match.group(0))[-1].strip()
+            
+            # Extract standalone numerical digit fragments if browser engine already converted them
+            digits = re.findall(r"\d+", coords_phrase)
+            
+            if len(digits) == 2:
+                # Perfect match fallback route: Browser typed digits with normal spacing
+                st.session_state[f"x_{v_id}"] = digits[0]
+                st.session_state[f"y_{v_id}"] = digits[1]
                 st.rerun()
-            except (ValueError, IndexError):
-                pass
-    else:
-        st.error(
-            f"❌ Could not isolate 3 separate segments. Engine translated speech to: '{processed_text}'"
-        )
+            else:
+                # Robust full-text conversational numbers converter (e.g., "three sixty seven hundred" -> 360700)
+                try:
+                    total_number_string = str(w2n.word_to_num(coords_phrase))
+                    if len(total_number_string) >= 5:
+                        half = len(total_number_string) // 2
+                        st.session_state[f"x_{v_id}"] = total_number_string[:half]
+                        st.session_state[f"y_{v_id}"] = total_number_string[half:]
+                        st.rerun()
+                except:
+                    # Final safety fallback: pull all continuous digit strings out sequentially
+                    digits_only = re.sub(r"\D", "", coords_phrase)
+                    if len(digits_only) >= 4:
+                        half = len(digits_only) // 2
+                        st.session_state[f"x_{v_id}"] = digits_only[:half]
+                        st.session_state[f"y_{v_id}"] = digits_only[half:]
+                        st.rerun()
 
 if st.button("🗑️ Clear All Fields"):
-    for i in range(1, 6):
-        st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
+    for i in range(1, 6): st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
     st.rerun()
 
 st.subheader("📍 Active Spawns")
 spawns = []
-
-
 def get_coord(val_string):
     try:
         val = int(str(val_string).strip())
-        if 0 <= val <= 1200:
-            return val
-    except ValueError:
-        pass
+        if 0 <= val <= 1200: return val
+    except ValueError: pass
     return None
-
 
 # Clean columns completely intact for standard grid typing or voice updates
 for i in range(1, 6):
-    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
+    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]:
         col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
-        with col_lbl:
-            st.markdown(
-                f"<div style='padding-top: 6px; font-weight: bold;'>Spawn {i}</div>",
-                unsafe_allow_html=True,
-            )
-
-        with col_a:
-            x_in = st.text_input(
-                f"S{i}X",
-                value=st.session_state[f"x_{i}"],
-                key=f"field_x_{i}",
-                placeholder="X...",
-                label_visibility="collapsed",
-            )
+        with col_lbl: st.markdown(f"<div style='padding-top: 6px; font-weight: bold;'>Spawn {i}</div>", unsafe_allow_html=True)
+        with col_a: 
+            x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"field_x_{i}", placeholder="X...", label_visibility="collapsed")
             st.session_state[f"x_{i}"] = x_in
-        with col_b:
-            y_in = st.text_input(
-                f"S{i}Y",
-                value=st.session_state[f"y_{i}"],
-                key=f"field_y_{i}",
-                placeholder="Y...",
-                label_visibility="collapsed",
-            )
+        with col_b: 
+            y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"field_y_{i}", placeholder="Y...", label_visibility="collapsed")
             st.session_state[f"y_{i}"] = y_in
-
+            
         x_val, y_val = get_coord(x_in), get_coord(y_in)
-        if x_val is not None and y_val is not None:
-            spawns.append((x_val, y_val))
+        if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
 
 st.write("---")
 target_x, target_y = None, None
@@ -168,69 +117,34 @@ if len(spawns) > 0:
     X, Y = np.meshgrid(np.arange(0, 1200), np.arange(0, 1200))
     X, Y = X.flatten(), Y.flatten()
     valid_mask = np.ones_like(X, dtype=bool)
-    for sx, sy in spawns:
-        valid_mask &= np.sqrt((X - sx) ** 2 + (Y - sy) ** 2) > 150
-    for r in rivals:
-        valid_mask &= np.sqrt((X - r["X"]) ** 2 + (r["Y"] - Y) ** 2) > 200
-
+    for sx, sy in spawns: valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 150)
+    for r in rivals: valid_mask &= (np.sqrt((X - r["X"])**2 + (r["Y"] - Y)**2) > 200)
+    
     valid_x, valid_y = X[valid_mask], Y[valid_mask]
     if len(valid_x) > 0:
-        dist = np.sqrt((valid_x - HIVE_X) ** 2 + (valid_y - HIVE_Y) ** 2)
+        dist = np.sqrt((valid_x - HIVE_X)**2 + (valid_y - HIVE_Y)**2)
         idx = np.argmin(dist)
         target_x, target_y = int(valid_x[idx]), int(valid_y[idx])
-        st.success(
-            f"🎯 **Teleport here:** X: {target_x}, Y: {target_y} ({int(round(dist[idx]))} km from Hive)"
-        )
-
+        st.success(f"🎯 **Teleport here:** X: {target_x}, Y: {target_y} ({int(round(dist[idx]))} km from Hive)")
+        
         # 🔊 Autoplay Audio Output Channel
         phrase = f"coords, {target_x}, {target_y}. ... {target_x}, {target_y}."
-        tts = gTTS(text=phrase, lang="en", tld="com", slow=False)
+        tts = gTTS(text=phrase, lang='en', tld='com', slow=False)
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
         audio_fp.seek(0)
         b64 = base64.b64encode(audio_fp.read()).decode()
-        st.markdown(
-            f'<audio src="data:audio/mp3;base64,{b64}" autoplay style="display:none;"></audio>',
-            unsafe_allow_html=True,
-        )
-        target_data = pd.DataFrame(
-            [{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯"}]
-        )
+        st.markdown(f'<audio src="data:audio/mp3;base64,{b64}" autoplay style="display:none;"></audio>', unsafe_allow_html=True)
+        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯"}])
 
 CENTER_X, CENTER_Y = 520, 600
-x_scale = alt.Scale(
-    domain=[
-        (CENTER_X - 350) - (CENTER_Y + 350),
-        (CENTER_X + 350) - (CENTER_Y - 350),
-    ]
-)
-y_scale = alt.Scale(
-    domain=[
-        (CENTER_X - 350) + (CENTER_Y - 350),
-        (CENTER_X + 350) + (CENTER_Y + 350),
-    ],
-    reverse=True,
-)
+x_scale = alt.Scale(domain=[(CENTER_X - 350) - (CENTER_Y + 350), (CENTER_X + 350) - (CENTER_Y - 350)])
+y_scale = alt.Scale(domain=[(CENTER_X - 350) + (CENTER_Y - 350), (CENTER_X + 350) + (CENTER_Y + 350)], reverse=True)
 
-map_data = [
-    {"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰"},
-    {"X_iso": 0, "Y_iso": 1200, "Emoji": "👑"},
-]
-for sx, sy in spawns:
-    map_data.append({"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹"})
-for r in rivals:
-    map_data.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Emoji": "💀"})
+map_data = [{"X_iso": HIVE_X-HIVE_Y, "Y_iso": HIVE_X+HIVE_Y, "Emoji": "🏰"}, {"X_iso": 0, "Y_iso": 1200, "Emoji": "👑"}]
+for sx, sy in spawns: map_data.append({"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "👹"})
+for r in rivals: map_data.append({"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "💀"})
 
 df = pd.concat([pd.DataFrame(map_data), target_data])
-chart = (
-    alt.Chart(df)
-    .mark_text(size=30)
-    .encode(
-        x=alt.X("X_iso:Q", scale=x_scale, axis=None),
-        y=alt.Y("Y_iso:Q", scale=y_scale, axis=None),
-        text="Emoji:N",
-    )
-    .properties(width=700, height=500)
-    .configure_view(strokeOpacity=0)
-)
+chart = alt.Chart(df).mark_text(size=30).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N').properties(width=700, height=500).configure_view(strokeOpacity=0)
 st.altair_chart(chart, use_container_width=True)
