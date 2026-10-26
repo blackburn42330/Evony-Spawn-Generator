@@ -4,7 +4,6 @@ import pandas as pd
 import altair as alt
 from gtts import gTTS
 import io
-import base64
 
 st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
@@ -18,16 +17,6 @@ st.markdown("""
         background-color: rgba(255, 215, 0, 0.05) !important; width: 100% !important; margin: 10px 0 15px 0 !important;
     }
     div.stButton > button:first-child:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
-    
-    /* Styled custom internal audio player button */
-    .voice-btn {
-        display: block; width: 100%; font-size: 20px !important; font-weight: bold !important; 
-        padding: 12px 24px !important; text-align: center; border-radius: 8px !important; 
-        border: 2px solid #FFD700 !important; color: #FFD700 !important;
-        background-color: rgba(255, 215, 0, 0.05) !important; margin: 10px 0 15px 0 !important;
-        cursor: pointer; font-family: sans-serif; box-sizing: border-box;
-    }
-    .voice-btn:hover { background-color: rgba(255, 215, 0, 0.15) !important; color: #FFF !important; border-color: #FFF !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -95,24 +84,16 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🔊 Local Data Embedding Voice Pipeline (Bypasses Sandbox Rules)
+        # 🔊 Trusted Native Audio Component Pipeline
         narration_phrase = f"teleport to coordinates x {target_x} y {target_y}"
-        
-        # Generate the audio bytes inside Python memory layout
         tts = gTTS(text=narration_phrase, lang='en', slow=False)
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
         audio_fp.seek(0)
         
-        # Convert internal bytes directly to an unblockable inline Base64 data string
-        b64_audio = base64.b64encode(audio_fp.read()).decode()
-        audio_data_uri = f"data:audio/mp3;base64,{b64_audio}"
-        
-        voice_player_html = f"""
-        <button class="voice-btn" onclick="document.getElementById('spawn-audio-engine').play();">🔊 Hear Next Target Coordinates</button>
-        <audio id="spawn-audio-engine" src="{audio_data_uri}" preload="auto"></audio>
-        """
-        st.markdown(voice_player_html, unsafe_allow_html=True)
+        # Displays the trusted player layout natively inside the Streamlit engine
+        st.write("🔊 **Voice Narration Track:**")
+        st.audio(audio_fp, format="audio/mp3")
         
         st.write("**Spawn Distances from Hive:**")
         dist_strings = []
