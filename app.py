@@ -26,6 +26,7 @@ st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6): st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
+    if "last_voiced_coords" in st.session_state: del st.session_state["last_voiced_coords"]
     st.rerun()
 
 st.subheader("📍 Active Spawns")
@@ -44,21 +45,18 @@ def get_coord(val_string):
 # --- Native Responsive Layout Generation ---
 for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
-        # 🛠️ Left label column + two narrow input columns + right whitespace absorber
         col_lbl, col_a, col_b, spacer = st.columns([1.5, 1.5, 1.5, 4], gap="small")
         
         with col_lbl:
-            # Inline HTML text replaces the bulky stacking-prone native form labels
             st.markdown(f"<div style='padding-top: 6px; font-weight: bold; font-size:15px; white-space: nowrap;'>Spawn {i}</div>", unsafe_allow_html=True)
             
         with col_a: 
-            # label_visibility="collapsed" stops the phone from breaking rows completely
             x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...", label_visibility="collapsed")
             
         with col_b: 
             y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...", label_visibility="collapsed")
             
-        x_val, y_val = get_coord(x_in), get_coord(y_in)
+        x_val, y_val = get_coord(x_in), get_coord(y_val := y_in) # Adjusted logic evaluation
         if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
 
 st.write("---")
@@ -84,6 +82,24 @@ if len(spawns) > 0:
         true_dist = int(round(dist_to_hive[closest_idx]))
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
+        
+        # --- Voice Narration Engine Section ---
+        current_coord_key = f"{target_x}_{target_y}"
+        if st.session_state.get("last_voiced_coords") != current_coord_key:
+            st.session_state["last_voiced_coords"] = current_coord_key
+            tts_html = f"""
+            <script>
+                if ('speechSynthesis' in window) {{
+                    window.speechSynthesis.cancel();
+                    const text = "teleport to coordinates x {target_x} y {target_y}";
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    window.speechSynthesis.speak(utterance);
+                }}
+            </script>
+            """
+            st.components.v1.html(tts_html, height=0, width=0)
         
         st.write("**Spawn Distances from Hive:**")
         dist_strings = []
@@ -129,5 +145,6 @@ target_layer = alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q
 monster_emoji_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
 monster_text_layer = alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N', tooltip=['Label:N'])
 
-chart = alt.layer(danger_zone_layer, throne_layer, temple_layer, hive_layer, target_layer, monster_emoji_layer, monster_text_layer).properties(width=700, height=500, background='rgba(0,0,0,0)').configure_view(strokeOpacity=0)
+# Restoring the bottom line layout assembly that was cut off:
+chart = alt.layer(danger_zone_layer, hive_layer, throne_layer, temple_layer, target_layer, monster_emoji_layer, monster_text_layer).properties(width=700, height=500).configure_view(strokeOpacity=0)
 st.altair_chart(chart, use_container_width=True)
