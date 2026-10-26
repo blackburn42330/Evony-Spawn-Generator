@@ -75,7 +75,7 @@ if spoken_text:
     # 3. Pull out ALL standalone numbers from the text block sequentially
     all_numbers = re.findall(r"\d+", processed_text)
 
-    # 4. Correctly index each extracted digit group sequentially
+    # 4. Correctly lock each extracted digit group into Session State safely
     if len(all_numbers) >= 3:
         v_id = all_numbers[0]
         # Ensure the stated index matches our valid 1-5 range layout limits
@@ -109,7 +109,6 @@ def get_coord(val_string):
 
 # Clean columns completely intact for standard grid typing or voice updates
 for i in range(1, 6):
-    # FIXED: Added the missing closing parenthesis to the statement block condition
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
         col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
         with col_lbl:
