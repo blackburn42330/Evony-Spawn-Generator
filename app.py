@@ -43,27 +43,27 @@ word_to_num = {
 }
 
 if spoken_text:
-    clean_text = str(spoken_text).lower().replace(",", "").replace("-", " ").strip()
+    # 1. Standardize text structure completely
+    clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
     
-    # Translate any spoken word numbers into digit strings
+    # 2. Convert text numbers to regular digits
     words = clean_text.split()
     translated_words = [word_to_num.get(w, w) for w in words]
     processed_text = " ".join(translated_words)
     
-    # Strip any remaining non-digit clutter out of raw text combinations
-    processed_text = re.sub(r'(?<=\d)\s+(?=\d)', '', processed_text) 
+    # 3. Pull out ALL standalone numbers from the text block sequentially
+    all_numbers = re.findall(r'\d+', processed_text)
     
-    # Search for match criteria pattern
-    extracted = re.search(r"spawn\s*([1-5])\s*(\d{1,4})\s*(\d{1,4})", processed_text)
-    if not extracted:
-        # Fallback regex search if word grouping spaces were kept intact
-        extracted = re.search(r"spawn\s*([1-5])\s*(\d+)\s*(\d+)", " ".join(translated_words))
-        
-    if extracted:
-        v_id = extracted.group(1)
-        st.session_state[f"x_{v_id}"] = extracted.group(2)
-        st.session_state[f"y_{v_id}"] = extracted.group(3)
-        st.rerun()
+    # 4. If we found at least 3 numbers (Spawn index, X, Y), process them!
+    if len(all_numbers) >= 3:
+        v_id = all_numbers[0]
+        # Ensure the stated index matches our valid 1-5 range layout limits
+        if v_id in ["1", "2", "3", "4", "5"]:
+            st.session_state[f"x_{v_id}"] = all_numbers[1]
+            st.session_state[f"y_{v_id}"] = all_numbers[2]
+            st.rerun()
+    else:
+        st.error(f"Could not parse 3 distinct numbers. Engine heard: '{spoken_text}'")
 
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6): st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
