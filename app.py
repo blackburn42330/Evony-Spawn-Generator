@@ -22,7 +22,32 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 200km away from rivals.")
-st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the fields side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
+
+st.markdown("### 🎙️ Sandbox Voice Settings")
+voice_selection = st.selectbox("Select Narration Profile / Accent Engine:", options=[
+    "🇺🇸 English (United States)", "🇦🇺 English (Australia)", "🇬🇧 English (United Kingdom)", 
+    "🇨🇦 English (Canada)", "🇮🇳 English (India)", "🇮🇪 English (Ireland)", 
+    "🇳🇿 English (New Zealand)", "🇿🇦 English (South Africa)", "🇲🇾 English (Malaysia)",
+    "🇪🇸 Spanish (Spain Numbers)", "🇫🇷 French (France Numbers)", "🇩🇪 German (Germany Numbers)"
+], index=0)
+
+voice_config = {
+    "🇺🇸 English (United States)":   {"lang": "en", "tld": "com",    "intro": "coords"},
+    "🇦🇺 English (Australia)":       {"lang": "en", "tld": "com.au", "intro": "coords"},
+    "🇬🇧 English (United Kingdom)":   {"lang": "en", "tld": "co.uk",  "intro": "coords"},
+    "🇨🇦 English (Canada)":          {"lang": "en", "tld": "ca",     "intro": "coords"},
+    "🇮🇳 English (India)":           {"lang": "en", "tld": "co.in",  "intro": "coords"},
+    "🇮🇪 English (Ireland)":          {"lang": "en", "tld": "ie",     "intro": "coords"},
+    "🇳🇿 English (New Zealand)":      {"lang": "en", "tld": "co.nz",  "intro": "coords"},
+    "🇿🇦 English (South Africa)":     {"lang": "en", "tld": "co.za",  "intro": "coords"},
+    "🇲🇾 English (Malaysia)":         {"lang": "en", "tld": "com.my", "intro": "coords"},
+    "🇪🇸 Spanish (Spain Numbers)":   {"lang": "es", "tld": "es",     "intro": "coordenadas"},
+    "🇫🇷 French (France Numbers)":   {"lang": "fr", "tld": "fr",     "intro": "coordonnées"},
+    "🇩🇪 German (Germany Numbers)":   {"lang": "de", "tld": "de",     "intro": "koordinaten"}
+}
+
+cfg = voice_config[voice_selection]
+st.write("---")
 
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -44,20 +69,13 @@ def get_coord(val_string):
     except ValueError: pass
     return None
 
-# --- Native Responsive Layout Generation ---
 for i in range(1, 6):
-    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]) :
-        col_lbl, col_a, col_b, spacer = st.columns([1.5, 1.5, 1.5, 4], gap="small")
-        
+    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
+        col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
         with col_lbl:
             st.markdown(f"<div style='padding-top: 6px; font-weight: bold; font-size:15px; white-space: nowrap;'>Spawn {i}</div>", unsafe_allow_html=True)
-            
-        with col_a: 
-            x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...", label_visibility="collapsed")
-            
-        with col_b: 
-            y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...", label_visibility="collapsed")
-            
+        with col_a: x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...", label_visibility="collapsed")
+        with col_b: y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...", label_visibility="collapsed")
         x_val, y_val = get_coord(x_in), get_coord(y_in)
         if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
 
@@ -85,27 +103,20 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🔊 Australian Voice Audio Engine (tld='com.au')
-        narration_phrase = f"coords, {target_x}, {target_y}. ... {target_x}, {target_y}."
-        tts = gTTS(text=narration_phrase, lang='en', tld='com.au', slow=False)
+        # Audio generation logic
+        phrase = f"{cfg['intro']}, {target_x}, {target_y}. ... {target_x}, {target_y}."
+        tts = gTTS(text=phrase, lang=cfg["lang"], tld=cfg["tld"], slow=False)
         audio_fp = io.BytesIO()
         tts.write_to_fp(audio_fp)
         audio_fp.seek(0)
         
-        # Encode audio into data string
-        b64_audio = base64.b64encode(audio_fp.read()).decode()
-        audio_data_uri = f"data:audio/mp3;base64,{b64_audio}"
-        
+        b64 = base64.b64encode(audio_fp.read()).decode()
         st.write("🔊 **Voice Narration Track:**")
-        st.markdown(f'<audio src="{audio_data_uri}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
+        st.markdown(f'<audio src="data:audio/mp3;base64,{b64}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
         
         st.write("**Spawn Distances from Hive:**")
-        dist_strings = []
-        for idx, (sx, sy) in enumerate(spawns, 1):
-            s_dist = int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))
-            dist_strings.append(f"**Spawn {idx}:** {s_dist} km")
+        dist_strings = [f"**Spawn {idx}:** {int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]
         st.write(" | ".join(dist_strings))
-                
         target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
     else: st.error("❌ No valid spawning coordinates found with the current constraints.")
 
@@ -135,13 +146,16 @@ danger_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=[
 
 x_scale, y_scale = alt.Scale(domain=[min_x_iso, max_x_iso]), alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
 
-danger_zone_layer = alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N'])
-hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-target_layer = alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-monster_emoji_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-monster_text_layer = alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N', tooltip=['Label:N'])
+# Compact loop definitions for the chart layers to prevent character layout overflows
+layers = [
+    alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N']),
+    alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']),
+    alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']),
+    alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']),
+    alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']),
+    alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N']),
+    alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N', tooltip=['Label:N'])
+]
 
-chart = alt.layer(danger_zone_layer, hive_layer, throne_layer, temple_layer, target_layer, monster_emoji_layer, monster_text_layer).properties(width=700, height=500).configure_view(strokeOpacity=0)
+chart = alt.layer(*layers).properties(width=700, height=500).configure_view(strokeOpacity=0)
 st.altair_chart(chart, use_container_width=True)
