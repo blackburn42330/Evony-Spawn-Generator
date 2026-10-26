@@ -21,7 +21,7 @@ def render_voice_listener():
             engine.lang = 'en-US';
             
             engine.onstart = () => {
-                statusBox.innerHTML = "🟢 LISTENING: Call out 'Spawn [1-5] X Y' hands-free...";
+                statusBox.innerHTML = " 🟢 LISTENING: Call out 'Spawn [1-5] X Y' hands-free...";
                 statusBox.style.color = "#00FF00"; statusBox.style.background = "rgba(0,255,0,0.08)"; statusBox.style.borderColor = "#00FF00";
             };
             
@@ -33,8 +33,8 @@ def render_voice_listener():
                     const xVal = parse[2];
                     const yVal = parse[3];
                     
-                    // Secure data highway routing directly via URL updates
-                    window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + `?v_id=${sNum}&v_x=${xVal}&v_y=${yVal}`;
+                    // Direct address bar link rewrite to securely route variables past cross-origin iframe barriers
+                    window.parent.location.search = `?v_id=${sNum}&v_x=${xVal}&v_y=${yVal}`;
                 }
             };
             engine.onerror = () => { engine.start(); };
