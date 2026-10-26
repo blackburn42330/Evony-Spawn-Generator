@@ -37,6 +37,13 @@ for i in range(1, 6):
 
 st.subheader("🎙️ Hands-Free Voice Input")
 
+spoken_text = speech_to_text(
+    start_prompt="🎙️ Start Listening",
+    stop_prompt="🛑 Stop & Process",
+    language="en",
+    key="voice_input_engine",
+)
+
 # Text-to-Number Word Translation Dictionary to handle mobile voice streams
 word_to_num = {
     "one": "1",
@@ -57,31 +64,26 @@ word_to_num = {
 }
 
 
-# --- ⚡ FIXED: Robust Voice Processing Pipeline with Whitespace Stripping ---
+# --- ⚡ FIXED: Clean Array Index Parsing Pipeline ---
 def process_voice_input():
     spoken_text = st.session_state.get("voice_input_engine")
     if spoken_text:
-        # 1. Standardize text structure completely
         clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
-
-        # 2. Convert text numbers to regular digits
         words = clean_text.split()
         translated_words = [word_to_num.get(w, w) for w in words]
         processed_text = " ".join(translated_words)
 
-        # 3. Pull out ALL standalone number fragments from the text block sequentially
+        # Pull out standalone digits out of the spoken voice data
         all_numbers = re.findall(r"\d+", processed_text)
 
-        # 4. Process matches safely by scrubbing whitespaces from coordinate segments
+        # FIXED: Extract clean sequence items out of the list matches safely
         if len(all_numbers) >= 3:
-            # Strip out any unintended space blocks or strings
-            v_id = re.sub(r"\s+", "", str(all_numbers[0]))
-            v_x = re.sub(r"\s+", "", str(all_numbers[1]))
-            v_y = re.sub(r"\s+", "", str(all_numbers[2]))
+            v_id = str(all_numbers[0]).strip()
+            v_x = str(all_numbers[1]).strip()
+            v_y = str(all_numbers[2]).strip()
 
             if v_id in ["1", "2", "3", "4", "5"]:
                 try:
-                    # Explicit numeric verification prior to setting app session states
                     st.session_state[f"x_{v_id}"] = str(int(v_x))
                     st.session_state[f"y_{v_id}"] = str(int(v_y))
                 except ValueError:
