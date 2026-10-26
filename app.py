@@ -71,7 +71,7 @@ def process_voice_input():
         # Pull out standalone digits out of the spoken voice data
         all_numbers = re.findall(r"\d+", processed_text)
 
-        # Extract clean sequence items out of the list matches safely
+        # FIXED: Extract clean sequence items out of the list matches safely using individual indexing positions
         if len(all_numbers) >= 3:
             v_id = str(all_numbers[0]).strip()
             v_x = str(all_numbers[1]).strip()
@@ -79,7 +79,7 @@ def process_voice_input():
 
             if v_id in ["1", "2", "3", "4", "5"]:
                 try:
-                    # Update session state values
+                    # Update session state values safely
                     st.session_state[f"x_{v_id}"] = str(int(v_x))
                     st.session_state[f"y_{v_id}"] = str(int(v_y))
                 except (ValueError, IndexError):
@@ -133,7 +133,6 @@ for i in range(1, 6):
                 unsafe_allow_html=True,
             )
 
-        # FIXED: Explicitly set the raw state string directly as the default text box state value
         with col_a:
             x_in = st.text_input(
                 f"S{i}X",
