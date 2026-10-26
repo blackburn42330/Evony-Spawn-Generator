@@ -1,5 +1,6 @@
 streamlit
 streamlit-mic-recorder
+word2number
 gtts
 numpy
 pandas
