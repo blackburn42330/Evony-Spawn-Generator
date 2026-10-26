@@ -61,27 +61,39 @@ word_to_num = {
     "nine": "9",
     "zero": "0",
     "oh": "0",
+    "hundred": "00",
 }
 
-# --- ⚡ FIXED: Smart Digit-Chopper Parser Engine ---
+# --- ⚡ FIXED: Smart Spacing Tokenizer Engine ---
 if spoken_text:
-    clean_text = str(spoken_text).lower().replace(",", " ").replace("-", " ").strip()
+    clean_text = (
+        str(spoken_text)
+        .lower()
+        .replace(",", " ")
+        .replace("-", " ")
+        .replace(" hundred", "00")
+        .strip()
+    )
+
+    # Inject explicit space characters between numbers smashed together by the speech API
+    clean_text = re.sub(r"(\d)([a-zA-Z])", r"\1 \2", clean_text)
+    clean_text = re.sub(r"([a-zA-Z])(\d)", r"\1 \2", clean_text)
+
     words = clean_text.split()
     translated_words = [word_to_num.get(w, w) for w in words]
     processed_text = " ".join(translated_words)
 
-    # Strip ALL spaces and text characters to get one giant string of raw digits
-    digits_only = re.sub(r"\D", "", processed_text)
+    # Force a space layout separation between trailing sequence elements if they are completely jammed together
+    processed_text = re.sub(r"(\d{3})(\d{3})", r"\1 \2", processed_text)
+    processed_text = re.sub(r"([1-5])(\d{3})", r"\1 \2", processed_text)
 
-    # Must have at least a Spawn ID (1 digit) and squished X/Y coordinates (at least 4 digits total)
-    if len(digits_only) >= 5:
-        v_id = digits_only[0]  # First digit is the Spawn ID (1-5)
-        coords_tail = digits_only[1:]  # Everything else is X and Y smashed together
+    # Pull out standalone digit chunks now that spacing gaps are safely enforced
+    all_numbers = re.findall(r"\d+", processed_text)
 
-        # Split the remaining coordinates block directly in half
-        half = len(coords_tail) // 2
-        v_x = coords_tail[:half]
-        v_y = coords_tail[half:]
+    if len(all_numbers) >= 3:
+        v_id = all_numbers[0]
+        v_x = all_numbers[1]
+        v_y = all_numbers[2]
 
         if v_id in ["1", "2", "3", "4", "5"]:
             try:
@@ -92,7 +104,7 @@ if spoken_text:
                 pass
     else:
         st.error(
-            f"❌ Could not isolate enough digits. Engine translated speech to: '{processed_text}'"
+            f"❌ Could not isolate 3 separate segments. Engine translated speech to: '{processed_text}'"
         )
 
 if st.button("🗑️ Clear All Fields"):
