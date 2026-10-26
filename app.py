@@ -32,10 +32,9 @@ for i in range(1, 6):
     if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
     if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
 
-# --- ⚡ FIXED: Explicit Structural Memory Clear Loop Engine ---
+# Memory Clear Loop Engine
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6):
-        # Erase both field references and underlying component key links to force empty vectors
         st.session_state[f"x_{i}"] = ""
         st.session_state[f"y_{i}"] = ""
         if f"field_x_{i}" in st.session_state: st.session_state[f"field_x_{i}"] = ""
@@ -91,10 +90,15 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # 🎙️ Natural phrasing formatter (713 -> "7 13" which speaks as "seven thirteen")
+        # ⚡ FIXED: Clean split formatter (e.g. 355 becomes "3 55", which speaks as "three fifty-five")
         def fmt_tts(num):
             s = str(num)
-            return f"{s} {s[1:]}" if len(s) == 3 and s != '0' else " ".join(list(s))
+            if len(s) == 3:
+                # Handles clean "zero" pacing for targets like 705 ("7 0 5")
+                if s[1] == '0':
+                    return f"{s[0]} zero {s[2]}"
+                return f"{s[0]} {s[1:]}"
+            return " ".join(list(s))
 
         speech_x = fmt_tts(target_x)
         speech_y = fmt_tts(target_y)
