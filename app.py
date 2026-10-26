@@ -27,15 +27,22 @@ st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first mo
 HIVE_X, HIVE_Y = 356, 721
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
-if st.button("🗑️ Clear All Fields"):
-    for i in range(1, 6): st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
-    st.rerun()
-
-st.subheader("📍 Active Spawns")
+# Initialize inputs inside state loops cleanly
 for i in range(1, 6):
     if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
     if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
 
+# --- ⚡ FIXED: Explicit Structural Memory Clear Loop Engine ---
+if st.button("🗑️ Clear All Fields"):
+    for i in range(1, 6):
+        # Erase both field references and underlying component key links to force empty vectors
+        st.session_state[f"x_{i}"] = ""
+        st.session_state[f"y_{i}"] = ""
+        if f"field_x_{i}" in st.session_state: st.session_state[f"field_x_{i}"] = ""
+        if f"field_y_{i}" in st.session_state: st.session_state[f"field_y_{i}"] = ""
+    st.rerun()
+
+st.subheader("📍 Active Spawns")
 spawns = []
 def get_coord(val_string):
     try:
@@ -50,8 +57,12 @@ for i in range(1, 6):
         col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
         with col_lbl:
             st.markdown(f"<div style='padding-top: 6px; font-weight: bold; font-size:15px; white-space: nowrap;'>Spawn {i}</div>", unsafe_allow_html=True)
-        with col_a: x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"x_{i}", placeholder="X...", label_visibility="collapsed")
-        with col_b: y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"y_{i}", placeholder="Y...", label_visibility="collapsed")
+        with col_a: 
+            x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"field_x_{i}", placeholder="X...", label_visibility="collapsed")
+            st.session_state[f"x_{i}"] = x_in
+        with col_b: 
+            y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"field_y_{i}", placeholder="Y...", label_visibility="collapsed")
+            st.session_state[f"y_{i}"] = y_in
         
         x_val, y_val = get_coord(x_in), get_coord(y_in)
         if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
@@ -83,7 +94,7 @@ if len(spawns) > 0:
         # 🎙️ Natural phrasing formatter (713 -> "7 13" which speaks as "seven thirteen")
         def fmt_tts(num):
             s = str(num)
-            return f"{s[0]} {s[1:]}" if len(s) == 3 and s[1] != '0' else " ".join(list(s))
+            return f"{s} {s[1:]}" if len(s) == 3 and s != '0' else " ".join(list(s))
 
         speech_x = fmt_tts(target_x)
         speech_y = fmt_tts(target_y)
@@ -97,19 +108,16 @@ if len(spawns) > 0:
         b64 = base64.b64encode(audio_fp.read()).decode()
         st.write("🔊 **Voice Narration Track:**")
         
-        # Unique target identification key tracking elements cleanly
         audio_el_id = f"audio_{target_x}_{target_y}"
         st.markdown(f'<audio id="{audio_el_id}" src="data:audio/mp3;base64,{b64}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
         
-        # ⚡ Inject JavaScript injection loop modifying speed metrics by exactly 5%
+        # Speed modifier hack (5% increase)
         speed_control_html = f"""
         <script>
             setTimeout(() => {{
                 const parentDoc = window.parent.document;
                 const audioTag = parentDoc.getElementById("{audio_el_id}");
-                if (audioTag) {{
-                    audioTag.playbackRate = 1.05;
-                }}
+                if (audioTag) {{ audioTag.playbackRate = 1.05; }}
             }}, 100);
         </script>
         """
