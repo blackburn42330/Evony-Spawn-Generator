@@ -44,7 +44,8 @@ def get_coord(val_string):
 
 # --- Native Responsive Layout Generation ---
 for i in range(1, 6):
-    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]:
+    # Fixed syntax error below by properly finishing the conditional check parentheses
+    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
         # 🛠️ Left label column + two narrow input columns + right whitespace absorber
         col_lbl, col_a, col_b, spacer = st.columns([1.5, 1.5, 1.5, 4], gap="small")
         
@@ -75,7 +76,6 @@ if len(spawns) > 0:
     valid_mask = np.ones_like(X, dtype=bool)
     
     for sx, sy in spawns: valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 150)
-    # Updated to 250km constraint
     for r in rivals: valid_mask &= (np.sqrt((X - r["X"])**2 + (r["Y"] - Y)**2) > 250)
     
     valid_x, valid_y = X[valid_mask], Y[valid_mask]
@@ -116,7 +116,6 @@ rival_list = []
 for r in rivals:
     if min_x <= r["X"] <= max_x and min_y <= r["Y"] <= max_y:
         monster_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Emoji": "💀", "TextLabel": r["Tag"], "Label": f"{r['Tag']} ({r['X']},{r['Y']})"})
-        # Updated map label metadata
         rival_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Label": f"{r['Tag']} Danger (250km)"})
         
 spawn_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "TextLabel", "Label"])
