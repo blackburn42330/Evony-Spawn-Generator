@@ -6,10 +6,10 @@ st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
 st.markdown("""
 <div style='text-align:left;font-family:"Arial Black",Gadget,sans-serif;font-size:22px;font-weight:bold;color:#FFD700;text-shadow:0 0 10px #FFD700, 0 0 20px #FF8C00;padding-bottom:12px'>NCI Spawn Calculator</div>
-<style>div.stButton>button:first-child{font-size:20px!important;font-weight:bold!important;padding:10px 24px!important;border-radius:8px!important;border:2px solid #FFD700!important;color:#FFD700!important;background-color:rgba(255,215,0,.05)!important;width:100%!important;margin:10px 0 15px 0!important}div.stButton>button:first-child:hover{background-color:rgba(255,215,0,.15)!important;color:#FFF!important;border-color:#FFF!important}</style>
+<style>div.stButton>button:first-child{font-size:20px!important;font-weight:bold!important;padding:10px 24px!important;border-radius:8px!important;border:2px solid #FFD700!important;color:#FFD700!important;background:rgba(0,0,0,0.35)!important;box-shadow:0 0 15px rgba(255,215,0,0.35)!important}div.stButton>button:first-child:hover{background:rgba(255,215,0,0.15)!important;color:#fff!important;border-color:#fff!important}</style>
 """, unsafe_allow_html=True)
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 250km away from rivals.")
-st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the fields side-by-side.\n3. The app will auto-suggest where to teleport next.")
+st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the fields side-by-side.\n3. The app will calculate the best target tile for your next attack.\n4. Copy the coordinates with the clipboard button next to the target.")
 
 HIVE_X, HIVE_Y = 297, 791
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -61,7 +61,42 @@ if spawns:
         d = np.hypot(vx-HIVE_X, vy-HIVE_Y)
         idx = np.argmin(d)
         target_x, target_y = int(vx[idx]), int(vy[idx]); true_dist = int(round(d[idx]))
-        st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
+        coord_col, copy_col = st.columns([8, 1])
+        with coord_col:
+            st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
+        with copy_col:
+            st.components.v1.html(
+                f"""
+                <button id="copy-coords" title="Copy coordinates" aria-label="Copy coordinates"
+                    style="background:transparent;border:0;cursor:pointer;padding:8px;color:#555;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="8" y="8" width="13" height="13" rx="2"></rect>
+                        <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
+                    </svg>
+                </button>
+                <script>
+                    document.getElementById("copy-coords").addEventListener("click", async () => {{
+                        const coords = "{target_x} {target_y}";
+                        try {{
+                            await navigator.clipboard.writeText(coords);
+                        }} catch (err) {{
+                            const field = document.createElement("textarea");
+                            field.value = coords;
+                            field.style.position = "fixed";
+                            field.style.opacity = "0";
+                            document.body.appendChild(field);
+                            field.select();
+                            document.execCommand("copy");
+                            field.remove();
+                        }}
+                    }});
+                </script>
+                """,
+                height=48,
+                scrolling=False,
+            )
         def fmt_tts(n):
             s = str(n)
             if len(s) == 3:
