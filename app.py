@@ -67,8 +67,19 @@ if spawns:
         with copy_col:
             st.components.v1.html(
                 f"""
-                <button id="copy-coords" title="Copy coordinates" aria-label="Copy coordinates"
-                    style="background:transparent;border:0;cursor:pointer;padding:8px;color:#555;">
+                <style>
+                    #copy-coords {{
+                        background: transparent; border: 0; border-radius: 6px;
+                        cursor: pointer; padding: 6px; color: #555;
+                        transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+                    }}
+                    #copy-coords:hover {{ background: rgba(255, 215, 0, 0.18); color: #b8860b; }}
+                    #copy-coords.copied {{ background: #d7f5df; color: #16813b; transform: scale(1.08); }}
+                    #copy-coords.failed {{ background: #ffe0e0; color: #b42318; }}
+                    #copy-status {{ display: block; min-height: 14px; font: 11px Arial, sans-serif; text-align: center; color: #16813b; }}
+                    #copy-status.error {{ color: #b42318; }}
+                </style>
+                <button id="copy-coords" title="Copy coordinates" aria-label="Copy coordinates">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -76,11 +87,16 @@ if spawns:
                         <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
                     </svg>
                 </button>
+                <span id="copy-status" aria-live="polite"></span>
                 <script>
-                    document.getElementById("copy-coords").addEventListener("click", async () => {{
+                    const copyButton = document.getElementById("copy-coords");
+                    const copyStatus = document.getElementById("copy-status");
+                    copyButton.addEventListener("click", async () => {{
                         const coords = "{target_x} {target_y}";
+                        let copied = false;
                         try {{
                             await navigator.clipboard.writeText(coords);
+                            copied = true;
                         }} catch (err) {{
                             const field = document.createElement("textarea");
                             field.value = coords;
@@ -88,13 +104,31 @@ if spawns:
                             field.style.opacity = "0";
                             document.body.appendChild(field);
                             field.select();
-                            document.execCommand("copy");
+                            copied = document.execCommand("copy");
                             field.remove();
                         }}
+                        copyButton.classList.remove("copied", "failed");
+                        copyStatus.classList.remove("error");
+                        if (copied) {{
+                            copyButton.classList.add("copied");
+                            copyStatus.textContent = "Copied!";
+                            copyButton.title = "Copied!";
+                        }} else {{
+                            copyButton.classList.add("failed");
+                            copyStatus.classList.add("error");
+                            copyStatus.textContent = "Copy failed";
+                            copyButton.title = "Copy failed";
+                        }}
+                        window.setTimeout(() => {{
+                            copyButton.classList.remove("copied", "failed");
+                            copyStatus.textContent = "";
+                            copyStatus.classList.remove("error");
+                            copyButton.title = "Copy coordinates";
+                        }}, 1800);
                     }});
                 </script>
                 """,
-                height=48,
+                height=62,
                 scrolling=False,
             )
         def fmt_tts(n):
