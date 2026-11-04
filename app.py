@@ -71,7 +71,6 @@ if len(spawns) > 0:
         
         st.success(f"🎯 **Teleport here:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # --- Native Raw Text Copy Button with Feedback ---
         clip_txt = f"{target_x} {target_y}"
         st.components.v1.html(f"""
         <button id="cb" style="width:100%; background:#1E1E24; color:#FFD700; border:1px solid #FFD700; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer;">
@@ -95,7 +94,7 @@ if len(spawns) > 0:
 
         def fmt_tts(n):
             s = str(n)
-            return f"{s[0]} zero {s[2]}" if len(s) == 3 and s[1] == '0' else (f"{s[0]} {s[1:]}" if len(s) == 3 else " ".join(list(s)))
+            return f"{s} zero {s}" if len(s) == 3 and s == '0' else (f"{s} {s[1:]}" if len(s) == 3 else " ".join(list(s)))
 
         phrase = f"coords, {fmt_tts(target_x)}, {fmt_tts(target_y)}. ... {fmt_tts(target_x)}, {fmt_tts(target_y)}."
         audio_fp = io.BytesIO()
@@ -126,7 +125,7 @@ map_items = pd.concat([h_d, t_d, m_d, r_d, s_d, target_data], ignore_index=True)
 
 if not map_items.empty:
     st.subheader("🗺️ Tactical Map Overlay")
-    ch = alt.Chart(map_items).mark_text(fontSize=22, baseline="middle", alignment="center").encode(
+    ch = alt.Chart(map_items).mark_text(fontSize=22, baseline="middle", align="center").encode(
         x=alt.X("X_iso:Q", scale=alt.Scale(domain=[min_x - max_y, max_x - min_y]), axis=None),
         y=alt.Y("Y_iso:Q", scale=alt.Scale(domain=[min_x + min_y, max_x + max_y]), axis=None),
         text="Emoji:N", tooltip="Label:N"
