@@ -21,7 +21,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 250km away from rivals.")
-st.markdown("### 📋 Instructions:\n1. Enter coordinates of your **first monster spawn**.\n2. Type subsequent spawns side-by-side.\n3. The app automatically calculates your safe teleport target!")
 
 HIVE_X, HIVE_Y = 297, 791
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -53,6 +52,7 @@ for i in range(1, 6):
 st.write("---")
 target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
 rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
+circles_list = []
 
 if len(spawns) > 0:
     X, Y = np.meshgrid(np.arange(0, 1200), np.arange(0, 1200))
@@ -114,20 +114,41 @@ if len(spawns) > 0:
 # --- Map Space definition Engine ---
 min_x, max_x = 170, 870
 min_y, max_y = 250, 950
+x_s = alt.Scale(domain=[min_x - max_y, max_x - min_y])
+y_s = alt.Scale(domain=[min_x + min_y, max_x + max_y])
 
 h_d = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
 t_d = pd.DataFrame([{"X_iso": 0, "Y_iso": 1200, "Emoji": "👑", "Label": "Throne (600,600)"}])
 m_d = pd.DataFrame([{"X_iso": x-y, "Y_iso": x+y, "Emoji": "🏛️", "Label": f"Temple ({x},{y})"} for x, y in [(300,900), (900,300), (300,300), (900,900)]])
-r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "❌", "Label": f"[{r['Tag']}]"} for r in rivals])
+
+# Rivals as Skulls 💀
+r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "💀", "Label": f"[{r['Tag']}] ({r['X']},{r['Y']})"} for r in rivals])
 s_d = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "💥", "Label": f"Spawn {i}"} for i, (sx, sy) in enumerate(spawns, 1)])
+
+# Danger Zones Coordinates (Rivals 250 Size, Spawns 150 Size)
+for r in rivals: circles_list.append({"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Size": 9500})
+for sx, sy in spawns: circles_list.append({"X_iso": sx-sy, "Y_iso": sx+sy, "Size": 3500})
+df_circles = pd.DataFrame(circles_list)
 
 map_items = pd.concat([h_d, t_d, m_d, r_d, s_d, target_data], ignore_index=True)
 
 if not map_items.empty:
     st.subheader("🗺️ Tactical Map Overlay")
-    ch = alt.Chart(map_items).mark_text(fontSize=22, baseline="middle", align="center").encode(
-        x=alt.X("X_iso:Q", scale=alt.Scale(domain=[min_x - max_y, max_x - min_y]), axis=None),
-        y=alt.Y("Y_iso:Q", scale=alt.Scale(domain=[min_x + min_y, max_x + max_y]), axis=None),
+    
+    # Layer 1: Emojis and Icons
+    base_chart = alt.Chart(map_items).mark_text(fontSize=22, baseline="middle", align="center").encode(
+        x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
         text="Emoji:N", tooltip="Label:N"
-    ).properties(width=700, height=450, background="#111").configure_view(strokeWidth=0)
-    st.altair_chart(ch, use_container_width=True)
+    )
+    
+    # Layer 2: Red Danger Zone Rings
+    if not df_circles.empty:
+        circles_chart = alt.Chart(df_circles).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.4).encode(
+            x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
+            size=alt.Size("Size:Q", scale=alt.Scale(range=[3500, 9500]), legend=None)
+        )
+        final_chart = alt.layer(circles_chart, base_chart).properties(width=700, height=450, background="#111").configure_view(strokeWidth=0)
+    else:
+        final_chart = base_chart.properties(width=700, height=450, background="#111").configure_view(strokeWidth=0)
+        
+    st.altair_chart(final_chart, use_container_width=True)
