@@ -121,8 +121,6 @@ h_d = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji"
 t_d = pd.DataFrame([{"X_iso": 0, "Y_iso": 1200, "Emoji": "👑", "Label": "Throne (600,600)", "Name": ""}])
 m_d = pd.DataFrame([{"X_iso": x-y, "Y_iso": x+y, "Emoji": "🏛️", "Label": f"Temple ({x},{y})", "Name": ""} for x, y in [(300,900), (900,300), (300,300), (900,900)]])
 r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "💀", "Label": f"[{r['Tag']}] ({r['X']},{r['Y']})", "Name": r["Tag"]} for r in rivals])
-
-# Spawn Emojis Swapped to Monsters (👾)
 s_d = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "👾", "Label": f"Spawn {i} ({sx},{sy})", "Name": f"S{i}"} for i, (sx, sy) in enumerate(spawns, 1)])
 
 for r in rivals: circles_list.append({"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Size": 9500, "Filled": True})
@@ -148,11 +146,11 @@ if not map_items.empty:
     if not df_circles.empty:
         shade_chart = alt.Chart(df_circles[df_circles['Filled'] == True]).mark_point(color="red", filled=True, opacity=0.12).encode(
             x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
-            size=alt.Size("Size:Q", scale=alt.Scale(range=), legend=None)
+            size=alt.Size("Size:Q", scale=alt.Scale(range=[9500, 9500]), legend=None)
         )
         ring_chart = alt.Chart(df_circles[df_circles['Filled'] == False]).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.35).encode(
             x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
-            size=alt.Size("Size:Q", scale=alt.Scale(range=), legend=None)
+            size=alt.Size("Size:Q", scale=alt.Scale(range=[3500, 3500]), legend=None)
         )
         layers.extend([shade_chart, ring_chart])
         
