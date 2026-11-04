@@ -51,7 +51,13 @@ for i in range(1, 6):
 
 st.write("---")
 target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label", "Name"])
-rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
+
+# Corrected Swapped Coordinates for Rivals
+rivals = [
+    {"X": 673, "Y": 771, "Tag": "TDK"}, 
+    {"X": 611, "Y": 551, "Tag": "CoG"}, 
+    {"X": 319, "Y": 481, "Tag": "NFM"}
+]
 circles_list = []
 
 if len(spawns) > 0:
@@ -121,10 +127,10 @@ h_d = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji"
 t_d = pd.DataFrame([{"X_iso": 0, "Y_iso": 1200, "Emoji": "👑", "Label": "Throne (600,600)", "Name": ""}])
 m_d = pd.DataFrame([{"X_iso": x-y, "Y_iso": x+y, "Emoji": "🏛️", "Label": f"Temple ({x},{y})", "Name": ""} for x, y in [(300,900), (900,300), (300,300), (900,900)]])
 
-# Rivals as Skulls with Associated Tag Labels
 r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "💀", "Label": f"[{r['Tag']}] ({r['X']},{r['Y']})", "Name": r["Tag"]} for r in rivals])
 s_d = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "💥", "Label": f"Spawn {i}", "Name": f"S{i}"} for i, (sx, sy) in enumerate(spawns, 1)])
 
+# Danger Rings Size Configuration Fixed
 for r in rivals: circles_list.append({"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Size": 9500})
 for sx, sy in spawns: circles_list.append({"X_iso": sx-sy, "Y_iso": sx+sy, "Size": 3500})
 df_circles = pd.DataFrame(circles_list)
@@ -134,24 +140,21 @@ map_items = pd.concat([h_d, t_d, m_d, r_d, s_d, target_data], ignore_index=True)
 if not map_items.empty:
     st.subheader("🗺️ Tactical Map Overlay")
     
-    # Layer 1: Emojis and Icons
     base_chart = alt.Chart(map_items).mark_text(fontSize=22, baseline="middle", align="center").encode(
         x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
         text="Emoji:N", tooltip="Label:N"
     )
     
-    # Layer 2: Persistent Side-Text Names Beside Emojis
     names_chart = alt.Chart(map_items).mark_text(fontSize=13, fontWeight="bold", color="#FFA500", dx=22, align="left", baseline="middle").encode(
         x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
         text="Name:N"
     )
     
-    # Layer 3: Red Danger Zone Rings
     layers = [base_chart, names_chart]
     if not df_circles.empty:
         circles_chart = alt.Chart(df_circles).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.35).encode(
             x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
-            size=alt.Size("Size:Q", scale=alt.Scale(range=[30, 200]), legend=None)
+            size=alt.Size("Size:Q", scale=alt.Scale(range=[100, 9500]), legend=None)
         )
         layers.insert(0, circles_chart)
         
