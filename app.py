@@ -3,14 +3,13 @@ import numpy as np
 import pandas as pd
 import altair as alt
 from gtts import gTTS
-import io
-import base64
+import io, base64
 
 st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
 
 st.markdown("""
-    <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
+    <div style='text-align: left; font-family: "Arial Black", sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
     <style>
     div.stButton > button:first-child {
         font-size: 20px !important; font-weight: bold !important; padding: 10px 24px !important;
@@ -22,65 +21,44 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 250km away from rivals.")
-st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the fields side-by-side.\n3. The app will automatically calculate your safe location to teleport to as you type!")
 
-# Updated Main Alliance Hive Coordinates
 HIVE_X, HIVE_Y = 297, 791
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
-# Initialize inputs inside state loops cleanly
 for i in range(1, 6):
     if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
     if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
 
-# Memory Clear Loop Engine
 if st.button("🗑️ Clear All Fields"):
     for i in range(1, 6):
-        st.session_state[f"x_{i}"] = ""
-        st.session_state[f"y_{i}"] = ""
+        st.session_state[f"x_{i}"], st.session_state[f"y_{i}"] = "", ""
         if f"field_x_{i}" in st.session_state: st.session_state[f"field_x_{i}"] = ""
         if f"field_y_{i}" in st.session_state: st.session_state[f"field_y_{i}"] = ""
     st.rerun()
 
 st.subheader("📍 Active Spawns")
 spawns = []
-def get_coord(val_string):
-    try:
-        val = int(val_string.strip())
-        if 0 <= val <= 1200: return val
-    except ValueError: pass
-    return None
-
-# --- Native Responsive Layout Generation ---
 for i in range(1, 6):
-    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]) :
+    if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]):
         col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
-        with col_lbl:
-            st.markdown(f"<div style='padding-top: 6px; font-weight: bold; font-size:15px; white-space: nowrap;'>Spawn {i}</div>", unsafe_allow_html=True)
-        with col_a: 
-            x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"field_x_{i}", placeholder="X...", label_visibility="collapsed")
-            st.session_state[f"x_{i}"] = x_in
-        with col_b: 
-            y_in = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"field_y_{i}", placeholder="Y...", label_visibility="collapsed")
-            st.session_state[f"y_{i}"] = y_in
-        
-        x_val, y_val = get_coord(x_in), get_coord(y_in)
-        if x_val is not None and y_val is not None: spawns.append((x_val, y_val))
+        with col_lbl: st.markdown(f"<div style='padding-top: 6px; font-weight: bold;'>Spawn {i}</div>", unsafe_allow_html=True)
+        with col_a: st.session_state[f"x_{i}"] = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"field_x_{i}", placeholder="X...", label_visibility="collapsed")
+        with col_b: st.session_state[f"y_{i}"] = st.text_input(f"S{i}Y", value=st.session_state[f"y_{i}"], key=f"field_y_{i}", placeholder="Y...", label_visibility="collapsed")
+        try:
+            x_v, y_v = int(st.session_state[f"x_{i}"].strip()), int(st.session_state[f"y_{i}"].strip())
+            if 0 <= x_v <= 1200 and 0 <= y_v <= 1200: spawns.append((x_v, y_v))
+        except ValueError: pass
 
 st.write("---")
-target_x, target_y, true_dist = None, None, None
-target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
-rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
+target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label", "Name"])
+rivals = [{"X": 673, "Y": 771, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 319, "Y": 481, "Tag": "NFM"}]
 
 if len(spawns) > 0:
-    x_range = np.arange(0, 1200)
-    y_range = np.arange(0, 1200)
-    X, Y = np.meshgrid(x_range, y_range)
+    X, Y = np.meshgrid(np.arange(0, 1200), np.arange(0, 1200))
     X, Y = X.flatten(), Y.flatten()
     valid_mask = np.ones_like(X, dtype=bool)
     
     for sx, sy in spawns: valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 150)
-    # Enforce 250km boundary around rivals
     for r in rivals: valid_mask &= (np.sqrt((X - r["X"])**2 + (r["Y"] - Y)**2) > 250)
     
     valid_x, valid_y = X[valid_mask], Y[valid_mask]
@@ -90,84 +68,91 @@ if len(spawns) > 0:
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
         
-        st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
+        st.success(f"🎯 **Teleport here:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # Clean split formatter (e.g. 355 becomes "3 55", which speaks as "three fifty-five")
-        def fmt_tts(num):
-            s = str(num)
+        clip_txt = f"{target_x} {target_y}"
+        st.components.v1.html(f"""
+        <button id="cb" style="width:100%; background:#1E1E24; color:#FFD700; border:1px solid #FFD700; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer;">
+            📋 <span id="ct">Copy Coordinates ({clip_txt})</span>
+        </button>
+        <script>
+        document.getElementById('cb').addEventListener('click', function() {{
+            navigator.clipboard.writeText('{clip_txt}').then(function() {{
+                document.getElementById('ct').innerText = "Copied! ✓";
+                document.getElementById('cb').style.background = "#2e7d32";
+                document.getElementById('cb').style.color = "#fff";
+                setTimeout(() => {{
+                    document.getElementById('ct').innerText = "Copy Coordinates ({clip_txt})";
+                    document.getElementById('cb').style.background = "#1E1E24";
+                    document.getElementById('cb').style.color = "#FFD700";
+                }}, 2000);
+            }});
+        }});
+        </script>
+        """, height=45)
+
+        def fmt_tts(n):
+            s = str(n)
             if len(s) == 3:
-                if s[1] == '0':
-                    return f"{s[0]} zero {s[2]}"
-                return f"{s[0]} {s[1:]}"
+                return f"{s[0]} zero {s[2]}" if s[1] == '0' else f"{s[0]} {s[1:]}"
             return " ".join(list(s))
 
         speech_x = fmt_tts(target_x)
         speech_y = fmt_tts(target_y)
+        
+        # Formatted to cleanly speak the tracking coordinates twice with a distinct pause break
         phrase = f"coords, {speech_x}, {speech_y}. ... {speech_x}, {speech_y}."
         
-        tts = gTTS(text=phrase, lang='en', tld='com', slow=False)
         audio_fp = io.BytesIO()
-        tts.write_to_fp(audio_fp)
+        gTTS(text=phrase, lang='en', tld='com').write_to_fp(audio_fp)
         audio_fp.seek(0)
         
-        b64 = base64.b64encode(audio_fp.read()).decode()
         st.write("🔊 **Voice Narration Track:**")
-        
-        audio_el_id = f"audio_{target_x}_{target_y}"
-        st.markdown(f'<audio id="{audio_el_id}" src="data:audio/mp3;base64,{b64}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
-        
-        # Speed modifier hack (5% increase)
-        speed_control_html = f"""
-        <script>
-            setTimeout(() => {{
-                const parentDoc = window.parent.document;
-                const audioTag = parentDoc.getElementById("{audio_el_id}");
-                if (audioTag) {{ audioTag.playbackRate = 1.05; }}
-            }}, 100);
-        </script>
-        """
-        st.components.v1.html(speed_control_html, height=0, width=0)
+        el_id = f"aud_{target_x}_{target_y}"
+        st.markdown(f'<audio id="{el_id}" src="data:audio/mp3;base64,{base64.b64encode(audio_fp.read()).decode()}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
+        st.components.v1.html(f'<script>setTimeout(() => {{ const a = window.parent.document.getElementById("{el_id}"); if(a) a.playbackRate = 1.05; }}, 100);</script>', height=0)
         
         st.write("**Spawn Distances from Hive:**")
-        dist_strings = [f"**Spawn {idx}:** {int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]
-        st.write(" | ".join(dist_strings))
-        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
-    else: st.error("❌ No valid spawning coordinates found with the current constraints.")
+        st.write(" | ".join([f"**Spawn {idx}:** {int(round(np.sqrt((sx-HIVE_X)**2 + (sy-HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]))
+        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})", "Name": ""}])
+    else: st.error("❌ No valid spawning coordinates found.")
 
-CENTER_X, CENTER_Y = 520, 600
-min_x, max_x = CENTER_X - 350, CENTER_X + 350
-min_y, max_y = CENTER_Y - 350, CENTER_Y + 350
-min_x_iso, max_x_iso = min_x - max_y, max_x - min_y
-min_y_iso, max_y_iso = min_x + min_y, max_x + max_y
+# --- Map Space definition Engine ---
+min_x, max_x = 170, 870
+min_y, max_y = 250, 950
+x_s = alt.Scale(domain=[min_x - max_y, max_x - min_y])
+y_s = alt.Scale(domain=[min_x + min_y, max_x + max_y])
 
-hive_data = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
-throne_data = pd.DataFrame([{"X_iso": 600 - 600, "Y_iso": 600 + 600, "Emoji": "👑", "Label": "Throne (600,600)"}])
-temple_data = pd.DataFrame([
-    {"X_iso": 300 - 900, "Y_iso": 300 + 900, "Emoji": "🏛️", "Label": "Hunter Temple (300,900)"},
-    {"X_iso": 300 - 300, "Y_iso": 300 + 300, "Emoji": "🏛️", "Label": "Harvest Temple (300,300)"},
-    {"X_iso": 900 - 300, "Y_iso": 900 + 300, "Emoji": "🏛️", "Label": "Forging Temple (900,300)"}
-])
+h_d = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})", "Name": "NCI"}])
+t_d = pd.DataFrame([{"X_iso": 0, "Y_iso": 1200, "Emoji": "👑", "Label": "Throne (600,600)", "Name": ""}])
+m_d = pd.DataFrame([{"X_iso": x-y, "Y_iso": x+y, "Emoji": "🏛️", "Label": f"Temple ({x},{y})", "Name": ""} for x, y in [(300,900), (900,300), (300,300), (900,900)]])
+r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "💀", "Label": f"[{r['Tag']}] ({r['X']},{r['Y']})", "Name": r["Tag"]} for r in rivals])
+s_d = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "👾", "Label": f"Spawn {i} ({sx},{sy})", "Name": f"S{i}"} for i, (sx, sy) in enumerate(spawns, 1)])
 
-monster_list = [{"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "TextLabel": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"} for idx, (sx, sy) in enumerate(spawns, 1)]
-rival_list = []
-for r in rivals:
-    if min_x <= r["X"] <= max_x and min_y <= r["Y"] <= max_y:
-        monster_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Emoji": "💀", "TextLabel": r["Tag"], "Label": f"{r['Tag']} ({r['X']},{r['Y']})"})
-        rival_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Label": f"{r['Tag']} Danger (250km)"})
+rival_circles = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"]} for r in rivals])
+
+map_items = pd.concat([h_d, t_d, m_d, r_d, s_d, target_data], ignore_index=True)
+
+if not map_items.empty:
+    st.subheader("🗺️ Tactical Map Overlay")
+    
+    base_chart = alt.Chart(map_items).mark_text(fontSize=22, baseline="middle", align="center").encode(
+        x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
+        text="Emoji:N", tooltip="Label:N"
+    )
+    
+    names_chart = alt.Chart(map_items).mark_text(fontSize=13, fontWeight="bold", color="#FFA500", dx=22, align="left", baseline="middle").encode(
+        x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
+        text="Name:N"
+    )
+    
+    layers = [base_chart, names_chart]
+    
+    if not rival_circles.empty:
+        shade_chart = alt.Chart(rival_circles).mark_point(color="red", filled=True, opacity=0.12, size=20000).encode(
+            x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None)
+        )
+        layers.insert(0, shade_chart)
         
-spawn_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "TextLabel", "Label"])
-danger_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Label"])
-
-x_scale, y_scale = alt.Scale(domain=[min_x_iso, max_x_iso]), alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
-
-danger_zone_layer = alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N'])
-hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-target_layer = alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-monster_emoji_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-monster_text_layer = alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N')
-
-# --- Combine Layers and Render Chart ---
-chart = alt.layer(danger_zone_layer, hive_layer, throne_layer, temple_layer, target_layer, monster_emoji_layer, monster_text_layer).properties(width=700, height=500).configure_view(strokeOpacity=0)
-st.altair_chart(chart, use_container_width=True)
+    final_chart = alt.layer(*layers).properties(width=700, height=450, background="#111").configure_view(strokeWidth=0)
+    st.altair_chart(final_chart, use_container_width=True)
