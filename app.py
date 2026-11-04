@@ -11,6 +11,7 @@ from minimap import render_minimap
 st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
 
+# Fixed styling strings and set markdown parameters safely
 st.markdown("""
     <div style='text-align: left; font-family: "Arial Black", Gadget, sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700, 0 0 20px #FF8C00; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
     <style>
@@ -58,6 +59,7 @@ for i in range(1, 6):
     if i == 1 or (st.session_state[f"x_{i-1}"] and st.session_state[f"y_{i-1}"]) :
         col_lbl, col_a, col_b, _ = st.columns([1.5, 1.5, 1.5, 4], gap="small")
         with col_lbl:
+            # Using st.markdown with unsafe_allow_html explicitly allowed here to format the label inline
             st.markdown(f"<div style='padding-top: 6px; font-weight: bold; font-size:15px; white-space: nowrap;'>Spawn {i}</div>", unsafe_allow_html=True)
         with col_a: 
             x_in = st.text_input(f"S{i}X", value=st.session_state[f"x_{i}"], key=f"field_x_{i}", placeholder="X...", label_visibility="collapsed")
@@ -82,22 +84,18 @@ if len(spawns) > 0:
     valid_mask = np.ones_like(X, dtype=bool)
     
     for sx, sy in spawns: valid_mask &= (np.sqrt((X - sx)**2 + (Y - sy)**2) > 150)
-    # Enforce 250km boundary around rivals
     for r in rivals: valid_mask &= (np.sqrt((X - r["X"])**2 + (r["Y"] - Y)**2) > 250)
     
     valid_x, valid_y = X[valid_mask], Y[valid_mask]
     if len(valid_x) > 0:
-        # Calculate distance elements first
         dist_to_hive = np.sqrt((valid_x - HIVE_X)**2 + (valid_y - HIVE_Y)**2)
         closest_idx = np.argmin(dist_to_hive)
         
-        # Set target coordinates correctly using the index
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
         
         st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
-        # Clean split formatter (e.g. 355 becomes "3 55", which speaks as "three fifty-five")
         def fmt_tts(num):
             s = str(num)
             if len(s) == 3:
@@ -121,7 +119,6 @@ if len(spawns) > 0:
         audio_el_id = f"audio_{target_x}_{target_y}"
         st.markdown(f'<audio id="{audio_el_id}" src="data:audio/mp3;base64,{b64}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
         
-        # Speed modifier hack (5% increase)
         speed_control_html = f"""
         <script>
             setTimeout(() => {{
