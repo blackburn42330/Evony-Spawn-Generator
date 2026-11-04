@@ -52,7 +52,6 @@ for i in range(1, 6):
 st.write("---")
 target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label", "Name"])
 rivals = [{"X": 673, "Y": 771, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 319, "Y": 481, "Tag": "NFM"}]
-circles_list = []
 
 if len(spawns) > 0:
     X, Y = np.meshgrid(np.arange(0, 1200), np.arange(0, 1200))
@@ -123,9 +122,8 @@ m_d = pd.DataFrame([{"X_iso": x-y, "Y_iso": x+y, "Emoji": "🏛️", "Label": f"
 r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "💀", "Label": f"[{r['Tag']}] ({r['X']},{r['Y']})", "Name": r["Tag"]} for r in rivals])
 s_d = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "👾", "Label": f"Spawn {i} ({sx},{sy})", "Name": f"S{i}"} for i, (sx, sy) in enumerate(spawns, 1)])
 
-# Size mapping arrays safely defined without scale expressions
-rival_circles = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Size": 12000} for r in rivals])
-spawn_circles = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Size": 4500} for sx, sy in spawns])
+rival_circles = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"]} for r in rivals])
+spawn_circles = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy} for sx, sy in spawns])
 
 map_items = pd.concat([h_d, t_d, m_d, r_d, s_d, target_data], ignore_index=True)
 
@@ -144,19 +142,17 @@ if not map_items.empty:
     
     layers = [base_chart, names_chart]
     
-    # Shade circles around rivals ONLY
+    # Render static-sized filled red circles for rivals (250km safety buffer size representation)
     if not rival_circles.empty:
-        shade_chart = alt.Chart(rival_circles).mark_point(color="red", filled=True, opacity=0.12).encode(
-            x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
-            size=alt.Size("Size:Q", legend=None)
+        shade_chart = alt.Chart(rival_circles).mark_point(color="red", filled=True, opacity=0.12, size=9500).encode(
+            x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None)
         )
         layers.insert(0, shade_chart)
         
-    # Wireframe rings around spawns ONLY
+    # Render static-sized thin rings for spawns (150km safety buffer size representation)
     if not spawn_circles.empty:
-        ring_chart = alt.Chart(spawn_circles).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.35).encode(
-            x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
-            size=alt.Size("Size:Q", legend=None)
+        ring_chart = alt.Chart(spawn_circles).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.35, size=3500).encode(
+            x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None)
         )
         layers.insert(0, ring_chart)
         
