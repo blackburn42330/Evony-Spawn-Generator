@@ -30,7 +30,7 @@ st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first mo
 HIVE_X, HIVE_Y = 297, 791
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
-# Initialize inputs inside state loops cleanly
+# Initialize inputs inside session state cleanly
 for i in range(1, 6):
     if f"x_{i}" not in st.session_state: st.session_state[f"x_{i}"] = ""
     if f"y_{i}" not in st.session_state: st.session_state[f"y_{i}"] = ""
@@ -87,11 +87,11 @@ if len(spawns) > 0:
     
     valid_x, valid_y = X[valid_mask], Y[valid_mask]
     if len(valid_x) > 0:
-        target_x, target_y = int(valid_x[0]), int(valid_y[0])
-        
-        # Recalculate distance elements
+        # Calculate distance elements first
         dist_to_hive = np.sqrt((valid_x - HIVE_X)**2 + (valid_y - HIVE_Y)**2)
         closest_idx = np.argmin(dist_to_hive)
+        
+        # Set target coordinates correctly using the index
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
         
@@ -141,5 +141,4 @@ if len(spawns) > 0:
         st.error("❌ No valid spawning coordinates found with the current constraints.")
 
 # --- Render Minimap Module Call ---
-# This safely hands off execution variables into the second file to render the Altair layers.
 render_minimap(HIVE_X, HIVE_Y, spawns, rivals, target_data)
