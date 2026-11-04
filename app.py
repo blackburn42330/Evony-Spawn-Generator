@@ -89,8 +89,75 @@ if len(spawns) > 0:
         closest_idx = np.argmin(dist_to_hive)
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
-        
-        st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
+
+        coord_col, copy_col = st.columns([8, 1])
+with coord_col:
+    st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
+
+with copy_col:
+    st.components.v1.html(
+        f"""
+        <style>
+            #copy-target {{
+                width: 100%;
+                height: 42px;
+                border: 1px solid rgba(255, 215, 0, 0.8);
+                border-radius: 8px;
+                background: rgba(255, 215, 0, 0.05);
+                color: #FFD700;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 180ms ease;
+            }}
+            #copy-target:hover {{
+                background: rgba(255, 215, 0, 0.12);
+                transform: translateY(-1px);
+            }}
+            #copy-target.copied {{
+                background: rgba(43, 199, 102, 0.15);
+                border-color: #5fe08d;
+                color: #7ef7a6;
+            }}
+            #copy-target svg {{
+                width: 18px;
+                height: 18px;
+            }}
+        </style>
+
+        <button id="copy-target" title="Copy coordinates" aria-label="Copy coordinates">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+                <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
+            </svg>
+        </button>
+
+        <script>
+            const copyButton = document.getElementById("copy-target");
+            copyButton.addEventListener("click", async () => {{
+                const text = "{target_x} {target_y}";
+                try {{
+                    await navigator.clipboard.writeText(text);
+                    copyButton.classList.add("copied");
+                    copyButton.title = "Copied!";
+                    setTimeout(() => {{
+                        copyButton.classList.remove("copied");
+                        copyButton.title = "Copy coordinates";
+                    }}, 1200);
+                }} catch (err) {{
+                    copyButton.title = "Copy failed";
+                    setTimeout(() => {{
+                        copyButton.title = "Copy coordinates";
+                    }}, 1200);
+                }}
+            }});
+        </script>
+        """,
+        height=56,
+        scrolling=False,
+    )
         
         # Clean split formatter (e.g. 355 becomes "3 55", which speaks as "three fifty-five")
         def fmt_tts(num):
