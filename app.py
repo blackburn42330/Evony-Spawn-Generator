@@ -91,14 +91,18 @@ if len(spawns) > 0:
         </script>
         """, height=45)
 
-        # Clear, non-repetitive formatting engine (e.g., 377 speaks cleanly as "3 77")
         def fmt_tts(n):
             s = str(n)
             if len(s) == 3:
                 return f"{s[0]} zero {s[2]}" if s[1] == '0' else f"{s[0]} {s[1:]}"
             return " ".join(list(s))
 
-        phrase = f"coords, {fmt_tts(target_x)}, {fmt_tts(target_y)}."
+        speech_x = fmt_tts(target_x)
+        speech_y = fmt_tts(target_y)
+        
+        # Formatted to cleanly speak the tracking coordinates twice with a distinct pause break
+        phrase = f"coords, {speech_x}, {speech_y}. ... {speech_x}, {speech_y}."
+        
         audio_fp = io.BytesIO()
         gTTS(text=phrase, lang='en', tld='com').write_to_fp(audio_fp)
         audio_fp.seek(0)
