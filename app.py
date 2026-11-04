@@ -50,7 +50,7 @@ for i in range(1, 6):
 
 st.write("---")
 target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label", "Name"])
-rivals = [{"X": 673, "Y": 771, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 319, "Y": 481, "Tag": "NFM"}]
+rivals = [{"X": 673, "Y": 771, "Tag": "NFM"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 319, "Y": 481, "Tag": "TDK"}]
 
 if len(spawns) > 0:
     X, Y = np.meshgrid(np.arange(0, 1200), np.arange(0, 1200))
