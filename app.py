@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import altair as alt
 from gtts import gTTS
 import io, base64
 
@@ -93,9 +92,14 @@ if len(spawns) > 0:
 
         def fmt_tts(n):
             s = str(n)
-            return f"{s} zero {s}" if len(s) == 3 and s == '0' else (f"{s} {s[1:]}" if len(s) == 3 else " ".join(list(s)))
+            if len(s) == 3:
+                return f"{s[0]} zero {s[2]}" if s[1] == '0' else f"{s[0]} {s[1:]}"
+            return " ".join(list(s))
 
-        phrase = f"coords, {fmt_tts(target_x)}, {fmt_tts(target_y)}. ... {fmt_tts(target_x)}, {fmt_tts(target_y)}."
+        speech_x = fmt_tts(target_x)
+        speech_y = fmt_tts(target_y)
+        phrase = f"coords, {speech_x}, {speech_y}. ... {speech_x}, {speech_y}."
+        
         audio_fp = io.BytesIO()
         gTTS(text=phrase, lang='en', tld='com').write_to_fp(audio_fp)
         audio_fp.seek(0)
@@ -107,46 +111,13 @@ if len(spawns) > 0:
         
         st.write("**Spawn Distances from Hive:**")
         st.write(" | ".join([f"**Spawn {idx}:** {int(round(np.sqrt((sx-HIVE_X)**2 + (sy-HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]))
-        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})", "Name": ""}])
-    else: st.error("❌ No valid spawning coordinates found.")
-
-# --- Map Space definition Engine ---
-min_x, max_x = 170, 870
-min_y, max_y = 250, 950
-x_s = alt.Scale(domain=[min_x - max_y, max_x - min_y])
-y_s = alt.Scale(domain=[min_x + min_y, max_x + max_y])
-
-h_d = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})", "Name": "NCI"}])
-t_d = pd.DataFrame([{"X_iso": 0, "Y_iso": 1200, "Emoji": "👑", "Label": "Throne (600,600)", "Name": ""}])
-m_d = pd.DataFrame([{"X_iso": x-y, "Y_iso": x+y, "Emoji": "🏛️", "Label": f"Temple ({x},{y})", "Name": ""} for x, y in [(300,900), (900,300), (300,300), (900,900)]])
-r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "💀", "Label": f"[{r['Tag']}] ({r['X']},{r['Y']})", "Name": r["Tag"]} for r in rivals])
-s_d = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "👾", "Label": f"Spawn {i} ({sx},{sy})", "Name": f"S{i}"} for i, (sx, sy) in enumerate(spawns, 1)])
-
-rival_circles = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"]} for r in rivals])
-
-map_items = pd.concat([h_d, t_d, m_d, r_d, s_d, target_data], ignore_index=True)
-
-if not map_items.empty:
-    st.subheader("🗺️ Tactical Map Overlay")
-    
-    base_chart = alt.Chart(map_items).mark_text(fontSize=22, baseline="middle", align="center").encode(
-        x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
-        text="Emoji:N", tooltip="Label:N"
-    )
-    
-    names_chart = alt.Chart(map_items).mark_text(fontSize=13, fontWeight="bold", color="#FFA500", dx=22, align="left", baseline="middle").encode(
-        x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
-        text="Name:N"
-    )
-    
-    layers = [base_chart, names_chart]
-    
-    # Render static-sized filled red circles around rivals enlarged to 200 size value
-    if not rival_circles.empty:
-        shade_chart = alt.Chart(rival_circles).mark_point(color="red", filled=True, opacity=0.12, size=20000).encode(
-            x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None)
-        )
-        layers.insert(0, shade_chart)
         
-    final_chart = alt.layer(*layers).properties(width=700, height=450, background="#111").configure_view(strokeWidth=0)
-    st.altair_chart(final_chart, use_container_width=True)
+        # Build clean isometric coordinate entry for the map rendering pipeline
+        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})", "Name": "Target"}])
+    else: 
+        st.error("❌ No valid spawning coordinates found.")
+
+# --- HAND OFF TO MINIMAP FILE LAYERS CLEANLY ---
+st.subheader("🗺️ Tactical Map Overlay")
+from minimap import render_minimap
+render_minimap(hive_x=HIVE_X, hive_y=HIVE_Y, spawns=spawns, rivals=rivals, target_data=target_data)
