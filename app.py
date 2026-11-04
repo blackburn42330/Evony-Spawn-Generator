@@ -51,13 +51,7 @@ for i in range(1, 6):
 
 st.write("---")
 target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label", "Name"])
-
-# Corrected Swapped Coordinates for Rivals
-rivals = [
-    {"X": 673, "Y": 771, "Tag": "TDK"}, 
-    {"X": 611, "Y": 551, "Tag": "CoG"}, 
-    {"X": 319, "Y": 481, "Tag": "NFM"}
-]
+rivals = [{"X": 673, "Y": 771, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 319, "Y": 481, "Tag": "NFM"}]
 circles_list = []
 
 if len(spawns) > 0:
@@ -123,16 +117,16 @@ min_y, max_y = 250, 950
 x_s = alt.Scale(domain=[min_x - max_y, max_x - min_y])
 y_s = alt.Scale(domain=[min_x + min_y, max_x + max_y])
 
-h_d = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})", "Name": ""}])
+# Assigned "NCI" Label to the Hive
+h_d = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})", "Name": "NCI"}])
 t_d = pd.DataFrame([{"X_iso": 0, "Y_iso": 1200, "Emoji": "👑", "Label": "Throne (600,600)", "Name": ""}])
 m_d = pd.DataFrame([{"X_iso": x-y, "Y_iso": x+y, "Emoji": "🏛️", "Label": f"Temple ({x},{y})", "Name": ""} for x, y in [(300,900), (900,300), (300,300), (900,900)]])
-
 r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "💀", "Label": f"[{r['Tag']}] ({r['X']},{r['Y']})", "Name": r["Tag"]} for r in rivals])
 s_d = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "💥", "Label": f"Spawn {i}", "Name": f"S{i}"} for i, (sx, sy) in enumerate(spawns, 1)])
 
-# Danger Rings Size Configuration Fixed
-for r in rivals: circles_list.append({"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Size": 9500})
-for sx, sy in spawns: circles_list.append({"X_iso": sx-sy, "Y_iso": sx+sy, "Size": 3500})
+# Split circles into dynamic filled zones and basic wireframe outlines
+for r in rivals: circles_list.append({"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Size": 9500, "Filled": True})
+for sx, sy in spawns: circles_list.append({"X_iso": sx-sy, "Y_iso": sx+sy, "Size": 3500, "Filled": False})
 df_circles = pd.DataFrame(circles_list)
 
 map_items = pd.concat([h_d, t_d, m_d, r_d, s_d, target_data], ignore_index=True)
@@ -152,11 +146,17 @@ if not map_items.empty:
     
     layers = [base_chart, names_chart]
     if not df_circles.empty:
-        circles_chart = alt.Chart(df_circles).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.35).encode(
+        # Shaded Red Danger Filled Circles for Rivals
+        shade_chart = alt.Chart(df_circles[df_circles['Filled'] == True]).mark_point(color="red", filled=True, opacity=0.12).encode(
             x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
-            size=alt.Size("Size:Q", scale=alt.Scale(range=[100, 9500]), legend=None)
+            size=alt.Size("Size:Q", scale=alt.Scale(range=[410, 410]), legend=None)
         )
-        layers.insert(0, circles_chart)
+        # Ring Outlines for Spawns
+        ring_chart = alt.Chart(df_circles[df_circles['Filled'] == False]).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.35).encode(
+            x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
+            size=alt.Size("Size:Q", scale=alt.Scale(range=[150, 150]), legend=None)
+        )
+        layers.extend([shade_chart, ring_chart])
         
     final_chart = alt.layer(*layers).properties(width=700, height=450, background="#111").configure_view(strokeWidth=0)
     st.altair_chart(final_chart, use_container_width=True)
