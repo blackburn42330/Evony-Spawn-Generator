@@ -123,9 +123,9 @@ m_d = pd.DataFrame([{"X_iso": x-y, "Y_iso": x+y, "Emoji": "🏛️", "Label": f"
 r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "💀", "Label": f"[{r['Tag']}] ({r['X']},{r['Y']})", "Name": r["Tag"]} for r in rivals])
 s_d = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "👾", "Label": f"Spawn {i} ({sx},{sy})", "Name": f"S{i}"} for i, (sx, sy) in enumerate(spawns, 1)])
 
-for r in rivals: circles_list.append({"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Size": 9500, "Filled": True})
-for sx, sy in spawns: circles_list.append({"X_iso": sx-sy, "Y_iso": sx+sy, "Size": 3500, "Filled": False})
-df_circles = pd.DataFrame(circles_list)
+# Size mapping arrays safely defined without scale expressions
+rival_circles = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Size": 12000} for r in rivals])
+spawn_circles = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Size": 4500} for sx, sy in spawns])
 
 map_items = pd.concat([h_d, t_d, m_d, r_d, s_d, target_data], ignore_index=True)
 
@@ -143,16 +143,22 @@ if not map_items.empty:
     )
     
     layers = [base_chart, names_chart]
-    if not df_circles.empty:
-        shade_chart = alt.Chart(df_circles[df_circles['Filled'] == True]).mark_point(color="red", filled=True, opacity=0.12).encode(
+    
+    # Shade circles around rivals ONLY
+    if not rival_circles.empty:
+        shade_chart = alt.Chart(rival_circles).mark_point(color="red", filled=True, opacity=0.12).encode(
             x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
-            size=alt.Size("Size:Q", scale=alt.Scale(range=[9500, 9500]), legend=None)
+            size=alt.Size("Size:Q", legend=None)
         )
-        ring_chart = alt.Chart(df_circles[df_circles['Filled'] == False]).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.35).encode(
+        layers.insert(0, shade_chart)
+        
+    # Wireframe rings around spawns ONLY
+    if not spawn_circles.empty:
+        ring_chart = alt.Chart(spawn_circles).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.35).encode(
             x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
-            size=alt.Size("Size:Q", scale=alt.Scale(range=[3500, 3500]), legend=None)
+            size=alt.Size("Size:Q", legend=None)
         )
-        layers.extend([shade_chart, ring_chart])
+        layers.insert(0, ring_chart)
         
     final_chart = alt.layer(*layers).properties(width=700, height=450, background="#111").configure_view(strokeWidth=0)
     st.altair_chart(final_chart, use_container_width=True)
