@@ -15,7 +15,6 @@ def render_minimap(hive_x, hive_y, spawns, rivals, target_data):
     hive_data = pd.DataFrame([{"X_iso": hive_x - hive_y, "Y_iso": hive_x + hive_y, "Emoji": "🏰", "Label": f"Hive ({hive_x},{hive_y})"}])
     throne_data = pd.DataFrame([{"X_iso": 600 - 600, "Y_iso": 600 + 600, "Emoji": "👑", "Label": "Throne (600,600)"}])
     
-    # Corrected Temples to strictly match their designated physical coordinate boundaries
     temple_data = pd.DataFrame([
         {"X_iso": 300 - 900, "Y_iso": 300 + 900, "Emoji": "🏛️", "Label": "Hunter Temple (300,900)"},
         {"X_iso": 300 - 300, "Y_iso": 300 + 300, "Emoji": "🏛️", "Label": "Harvest Temple (300,300)"},
@@ -27,14 +26,14 @@ def render_minimap(hive_x, hive_y, spawns, rivals, target_data):
     
     for r in rivals:
         if min_x <= r["X"] <= max_x and min_y <= r["Y"] <= max_y:
-            # FIXED: Explicitly forced "💀" so rivals stop rendering as a 4th temple icon
             monster_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Emoji": "💀", "TextLabel": r["Tag"], "Label": f"{r['Tag']} ({r['X']},{r['Y']})"})
             rival_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Label": f"{r['Tag']} Danger (250km)"})
             
     spawn_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "TextLabel", "Label"])
     danger_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Label"])
 
-    x_scale, y_scale = alt.Scale(domain=[min_x_iso, max_x_iso]), alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
+    # FIXED: Removed reverse=True from y_scale to fix the inverted vertical layout
+    x_scale, y_scale = alt.Scale(domain=[min_x_iso, max_x_iso]), alt.Scale(domain=[min_y_iso, max_y_iso])
 
     danger_zone_layer = alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N'])
     hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
