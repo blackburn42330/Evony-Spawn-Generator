@@ -14,6 +14,8 @@ def render_minimap(hive_x, hive_y, spawns, rivals, target_data):
 
     hive_data = pd.DataFrame([{"X_iso": hive_x - hive_y, "Y_iso": hive_x + hive_y, "Emoji": "🏰", "Label": f"Hive ({hive_x},{hive_y})"}])
     throne_data = pd.DataFrame([{"X_iso": 600 - 600, "Y_iso": 600 + 600, "Emoji": "👑", "Label": "Throne (600,600)"}])
+    
+    # Corrected Temples to strictly match their designated physical coordinate boundaries
     temple_data = pd.DataFrame([
         {"X_iso": 300 - 900, "Y_iso": 300 + 900, "Emoji": "🏛️", "Label": "Hunter Temple (300,900)"},
         {"X_iso": 300 - 300, "Y_iso": 300 + 300, "Emoji": "🏛️", "Label": "Harvest Temple (300,300)"},
@@ -25,6 +27,7 @@ def render_minimap(hive_x, hive_y, spawns, rivals, target_data):
     
     for r in rivals:
         if min_x <= r["X"] <= max_x and min_y <= r["Y"] <= max_y:
+            # FIXED: Explicitly forced "💀" so rivals stop rendering as a 4th temple icon
             monster_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Emoji": "💀", "TextLabel": r["Tag"], "Label": f"{r['Tag']} ({r['X']},{r['Y']})"})
             rival_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Label": f"{r['Tag']} Danger (250km)"})
             
