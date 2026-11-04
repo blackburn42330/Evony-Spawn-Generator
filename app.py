@@ -50,7 +50,7 @@ for i in range(1, 6):
         except ValueError: pass
 
 st.write("---")
-target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
+target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label", "Name"])
 rivals = [{"X": 319, "Y": 481, "Tag": "TDK"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 673, "Y": 771, "Tag": "NFM"}]
 circles_list = []
 
@@ -108,7 +108,7 @@ if len(spawns) > 0:
         
         st.write("**Spawn Distances from Hive:**")
         st.write(" | ".join([f"**Spawn {idx}:** {int(round(np.sqrt((sx-HIVE_X)**2 + (sy-HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]))
-        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
+        target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})", "Name": ""}])
     else: st.error("❌ No valid spawning coordinates found.")
 
 # --- Map Space definition Engine ---
@@ -117,15 +117,14 @@ min_y, max_y = 250, 950
 x_s = alt.Scale(domain=[min_x - max_y, max_x - min_y])
 y_s = alt.Scale(domain=[min_x + min_y, max_x + max_y])
 
-h_d = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
-t_d = pd.DataFrame([{"X_iso": 0, "Y_iso": 1200, "Emoji": "👑", "Label": "Throne (600,600)"}])
-m_d = pd.DataFrame([{"X_iso": x-y, "Y_iso": x+y, "Emoji": "🏛️", "Label": f"Temple ({x},{y})"} for x, y in [(300,900), (900,300), (300,300), (900,900)]])
+h_d = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})", "Name": ""}])
+t_d = pd.DataFrame([{"X_iso": 0, "Y_iso": 1200, "Emoji": "👑", "Label": "Throne (600,600)", "Name": ""}])
+m_d = pd.DataFrame([{"X_iso": x-y, "Y_iso": x+y, "Emoji": "🏛️", "Label": f"Temple ({x},{y})", "Name": ""} for x, y in [(300,900), (900,300), (300,300), (900,900)]])
 
-# Rivals as Skulls 💀
-r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "💀", "Label": f"[{r['Tag']}] ({r['X']},{r['Y']})"} for r in rivals])
-s_d = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "💥", "Label": f"Spawn {i}"} for i, (sx, sy) in enumerate(spawns, 1)])
+# Rivals as Skulls with Associated Tag Labels
+r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "💀", "Label": f"[{r['Tag']}] ({r['X']},{r['Y']})", "Name": r["Tag"]} for r in rivals])
+s_d = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "💥", "Label": f"Spawn {i}", "Name": f"S{i}"} for i, (sx, sy) in enumerate(spawns, 1)])
 
-# Danger Zones Coordinates (Rivals 250 Size, Spawns 150 Size)
 for r in rivals: circles_list.append({"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Size": 9500})
 for sx, sy in spawns: circles_list.append({"X_iso": sx-sy, "Y_iso": sx+sy, "Size": 3500})
 df_circles = pd.DataFrame(circles_list)
@@ -141,14 +140,20 @@ if not map_items.empty:
         text="Emoji:N", tooltip="Label:N"
     )
     
-    # Layer 2: Red Danger Zone Rings
+    # Layer 2: Persistent Side-Text Names Beside Emojis
+    names_chart = alt.Chart(map_items).mark_text(fontSize=13, fontWeight="bold", color="#FFA500", dx=22, align="left", baseline="middle").encode(
+        x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
+        text="Name:N"
+    )
+    
+    # Layer 3: Red Danger Zone Rings
+    layers = [base_chart, names_chart]
     if not df_circles.empty:
-        circles_chart = alt.Chart(df_circles).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.4).encode(
+        circles_chart = alt.Chart(df_circles).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.35).encode(
             x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None),
-            size=alt.Size("Size:Q", scale=alt.Scale(range=[3500, 9500]), legend=None)
+            size=alt.Size("Size:Q", scale=alt.Scale(range=[30, 200]), legend=None)
         )
-        final_chart = alt.layer(circles_chart, base_chart).properties(width=700, height=450, background="#111").configure_view(strokeWidth=0)
-    else:
-        final_chart = base_chart.properties(width=700, height=450, background="#111").configure_view(strokeWidth=0)
+        layers.insert(0, circles_chart)
         
+    final_chart = alt.layer(*layers).properties(width=700, height=450, background="#111").configure_view(strokeWidth=0)
     st.altair_chart(final_chart, use_container_width=True)
