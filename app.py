@@ -91,11 +91,14 @@ if len(spawns) > 0:
         </script>
         """, height=45)
 
+        # Clear, non-repetitive formatting engine (e.g., 377 speaks cleanly as "3 77")
         def fmt_tts(n):
             s = str(n)
-            return f"{s} zero {s}" if len(s) == 3 and s == '0' else (f"{s} {s[1:]}" if len(s) == 3 else " ".join(list(s)))
+            if len(s) == 3:
+                return f"{s[0]} zero {s[2]}" if s[1] == '0' else f"{s[0]} {s[1:]}"
+            return " ".join(list(s))
 
-        phrase = f"coords, {fmt_tts(target_x)}, {fmt_tts(target_y)}. ... {fmt_tts(target_x)}, {fmt_tts(target_y)}."
+        phrase = f"coords, {fmt_tts(target_x)}, {fmt_tts(target_y)}."
         audio_fp = io.BytesIO()
         gTTS(text=phrase, lang='en', tld='com').write_to_fp(audio_fp)
         audio_fp.seek(0)
@@ -141,7 +144,6 @@ if not map_items.empty:
     
     layers = [base_chart, names_chart]
     
-    # Render static-sized filled red circles around rivals enlarged to 200 size value
     if not rival_circles.empty:
         shade_chart = alt.Chart(rival_circles).mark_point(color="red", filled=True, opacity=0.12, size=20000).encode(
             x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None)
