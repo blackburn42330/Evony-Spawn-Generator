@@ -1,10 +1,12 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import altair as alt
 from gtts import gTTS
 import io
 import base64
+
+# Import your newly created minimap module
+from minimap import render_minimap
 
 st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
@@ -85,79 +87,15 @@ if len(spawns) > 0:
     
     valid_x, valid_y = X[valid_mask], Y[valid_mask]
     if len(valid_x) > 0:
+        target_x, target_y = int(valid_x[0]), int(valid_y[0])
+        
+        # Recalculate distance elements
         dist_to_hive = np.sqrt((valid_x - HIVE_X)**2 + (valid_y - HIVE_Y)**2)
         closest_idx = np.argmin(dist_to_hive)
         target_x, target_y = int(valid_x[closest_idx]), int(valid_y[closest_idx])
         true_dist = int(round(dist_to_hive[closest_idx]))
-
-        coord_col, copy_col = st.columns([8, 1])
-with coord_col:
-    st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
-
-with copy_col:
-    st.components.v1.html(
-        f"""
-        <style>
-            #copy-target {{
-                width: 100%;
-                height: 42px;
-                border: 1px solid rgba(255, 215, 0, 0.8);
-                border-radius: 8px;
-                background: rgba(255, 215, 0, 0.05);
-                color: #FFD700;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 180ms ease;
-            }}
-            #copy-target:hover {{
-                background: rgba(255, 215, 0, 0.12);
-                transform: translateY(-1px);
-            }}
-            #copy-target.copied {{
-                background: rgba(43, 199, 102, 0.15);
-                border-color: #5fe08d;
-                color: #7ef7a6;
-            }}
-            #copy-target svg {{
-                width: 18px;
-                height: 18px;
-            }}
-        </style>
-
-        <button id="copy-target" title="Copy coordinates" aria-label="Copy coordinates">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="11" height="11" rx="2"></rect>
-                <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
-            </svg>
-        </button>
-
-        <script>
-            const copyButton = document.getElementById("copy-target");
-            copyButton.addEventListener("click", async () => {{
-                const text = "{target_x} {target_y}";
-                try {{
-                    await navigator.clipboard.writeText(text);
-                    copyButton.classList.add("copied");
-                    copyButton.title = "Copied!";
-                    setTimeout(() => {{
-                        copyButton.classList.remove("copied");
-                        copyButton.title = "Copy coordinates";
-                    }}, 1200);
-                }} catch (err) {{
-                    copyButton.title = "Copy failed";
-                    setTimeout(() => {{
-                        copyButton.title = "Copy coordinates";
-                    }}, 1200);
-                }}
-            }});
-        </script>
-        """,
-        height=56,
-        scrolling=False,
-    )
+        
+        st.success(f"🎯 **Teleport here and continue spawning:** X: {target_x}, Y: {target_y} ({true_dist} km from Hive)")
         
         # Clean split formatter (e.g. 355 becomes "3 55", which speaks as "three fifty-five")
         def fmt_tts(num):
@@ -199,42 +137,9 @@ with copy_col:
         dist_strings = [f"**Spawn {idx}:** {int(round(np.sqrt((sx - HIVE_X)**2 + (sy - HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]
         st.write(" | ".join(dist_strings))
         target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})"}])
-    else: st.error("❌ No valid spawning coordinates found with the current constraints.")
+    else: 
+        st.error("❌ No valid spawning coordinates found with the current constraints.")
 
-CENTER_X, CENTER_Y = 520, 600
-min_x, max_x = CENTER_X - 350, CENTER_X + 350
-min_y, max_y = CENTER_Y - 350, CENTER_Y + 350
-min_x_iso, max_x_iso = min_x - max_y, max_x - min_y
-min_y_iso, max_y_iso = min_x + min_y, max_x + max_y
-
-hive_data = pd.DataFrame([{"X_iso": HIVE_X - HIVE_Y, "Y_iso": HIVE_X + HIVE_Y, "Emoji": "🏰", "Label": f"Hive ({HIVE_X},{HIVE_Y})"}])
-throne_data = pd.DataFrame([{"X_iso": 600 - 600, "Y_iso": 600 + 600, "Emoji": "👑", "Label": "Throne (600,600)"}])
-temple_data = pd.DataFrame([
-    {"X_iso": 300 - 900, "Y_iso": 300 + 900, "Emoji": "🏛️", "Label": "Hunter Temple (300,900)"},
-    {"X_iso": 300 - 300, "Y_iso": 300 + 300, "Emoji": "🏛️", "Label": "Harvest Temple (300,300)"},
-    {"X_iso": 900 - 300, "Y_iso": 900 + 300, "Emoji": "🏛️", "Label": "Forging Temple (900,300)"}
-])
-
-monster_list = [{"X_iso": sx - sy, "Y_iso": sx + sy, "Emoji": "👹", "TextLabel": str(idx), "Label": f"Spawn {idx} ({sx},{sy})"} for idx, (sx, sy) in enumerate(spawns, 1)]
-rival_list = []
-for r in rivals:
-    if min_x <= r["X"] <= max_x and min_y <= r["Y"] <= max_y:
-        monster_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Emoji": "💀", "TextLabel": r["Tag"], "Label": f"{r['Tag']} ({r['X']},{r['Y']})"})
-        rival_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Label": f"{r['Tag']} Danger (250km)"})
-        
-spawn_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "TextLabel", "Label"])
-danger_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Label"])
-
-x_scale, y_scale = alt.Scale(domain=[min_x_iso, max_x_iso]), alt.Scale(domain=[min_y_iso, max_y_iso], reverse=True)
-
-danger_zone_layer = alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N'])
-hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-target_layer = alt.Chart(target_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-monster_emoji_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-monster_text_layer = alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N')
-
-# --- Combine Layers and Render Chart ---
-chart = alt.layer(danger_zone_layer, hive_layer, throne_layer, temple_layer, target_layer, monster_emoji_layer, monster_text_layer).properties(width=700, height=500).configure_view(strokeOpacity=0)
-st.altair_chart(chart, use_container_width=True)
+# --- Render Minimap Module Call ---
+# This safely hands off execution variables into the second file to render the Altair layers.
+render_minimap(HIVE_X, HIVE_Y, spawns, rivals, target_data)
