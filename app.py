@@ -1,8 +1,8 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-from gtts import gTTS
-import io, base64
+from minimap import render_minimap
+from voice import play_coordinate_narration  # IMPORT VOICE ASYNC PIPELINE
 
 st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
@@ -90,34 +90,16 @@ if len(spawns) > 0:
         </script>
         """, height=45)
 
-        def fmt_tts(n):
-            s = str(n)
-            if len(s) == 3:
-                return f"{s[0]} zero {s[2]}" if s[1] == '0' else f"{s[0]} {s[1:]}"
-            return " ".join(list(s))
-
-        speech_x = fmt_tts(target_x)
-        speech_y = fmt_tts(target_y)
-        phrase = f"coords, {speech_x}, {speech_y}. ... {speech_x}, {speech_y}."
-        
-        audio_fp = io.BytesIO()
-        gTTS(text=phrase, lang='en', tld='com').write_to_fp(audio_fp)
-        audio_fp.seek(0)
-        
-        st.write("🔊 **Voice Narration Track:**")
-        el_id = f"aud_{target_x}_{target_y}"
-        st.markdown(f'<audio id="{el_id}" src="data:audio/mp3;base64,{base64.b64encode(audio_fp.read()).decode()}" controls autoplay style="width:100%;"></audio>', unsafe_allow_html=True)
-        st.components.v1.html(f'<script>setTimeout(() => {{ const a = window.parent.document.getElementById("{el_id}"); if(a) a.playbackRate = 1.05; }}, 100);</script>', height=0)
+        # CALL OUTSOURCED AUDIO SYSTEM NATIVELY
+        play_coordinate_narration(target_x, target_y)
         
         st.write("**Spawn Distances from Hive:**")
         st.write(" | ".join([f"**Spawn {idx}:** {int(round(np.sqrt((sx-HIVE_X)**2 + (sy-HIVE_Y)**2)))} km" for idx, (sx, sy) in enumerate(spawns, 1)]))
         
-        # Build clean isometric coordinate entry for the map rendering pipeline
         target_data = pd.DataFrame([{"X_iso": target_x - target_y, "Y_iso": target_x + target_y, "Emoji": "🎯", "Label": f"Target ({target_x},{target_y})", "Name": "Target"}])
     else: 
         st.error("❌ No valid spawning coordinates found.")
 
-# --- HAND OFF TO MINIMAP FILE LAYERS CLEANLY ---
+# --- HAND OFF TO MINIMAP LAYERS ---
 st.subheader("🗺️ Tactical Map Overlay")
-from minimap import render_minimap
 render_minimap(hive_x=HIVE_X, hive_y=HIVE_Y, spawns=spawns, rivals=rivals, target_data=target_data)
