@@ -123,7 +123,6 @@ r_d = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"], "Emoji": "ð
 s_d = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy, "Emoji": "ðŸ‘¾", "Label": f"Spawn {i} ({sx},{sy})", "Name": f"S{i}"} for i, (sx, sy) in enumerate(spawns, 1)])
 
 rival_circles = pd.DataFrame([{"X_iso": r["X"]-r["Y"], "Y_iso": r["X"]+r["Y"]} for r in rivals])
-spawn_circles = pd.DataFrame([{"X_iso": sx-sy, "Y_iso": sx+sy} for sx, sy in spawns])
 
 map_items = pd.concat([h_d, t_d, m_d, r_d, s_d, target_data], ignore_index=True)
 
@@ -142,19 +141,12 @@ if not map_items.empty:
     
     layers = [base_chart, names_chart]
     
-    # Render static-sized filled red circles for rivals (250km safety buffer size representation)
+    # Render static-sized filled red circles around rivals enlarged to 200 size value
     if not rival_circles.empty:
-        shade_chart = alt.Chart(rival_circles).mark_point(color="red", filled=True, opacity=0.12, size=9500).encode(
+        shade_chart = alt.Chart(rival_circles).mark_point(color="red", filled=True, opacity=0.12, size=20000).encode(
             x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None)
         )
         layers.insert(0, shade_chart)
-        
-    # Render static-sized thin rings for spawns (150km safety buffer size representation)
-    if not spawn_circles.empty:
-        ring_chart = alt.Chart(spawn_circles).mark_point(color="red", filled=False, strokeWidth=1.5, opacity=0.35, size=3500).encode(
-            x=alt.X("X_iso:Q", scale=x_s, axis=None), y=alt.Y("Y_iso:Q", scale=y_s, axis=None)
-        )
-        layers.insert(0, ring_chart)
         
     final_chart = alt.layer(*layers).properties(width=700, height=450, background="#111").configure_view(strokeWidth=0)
     st.altair_chart(final_chart, use_container_width=True)
