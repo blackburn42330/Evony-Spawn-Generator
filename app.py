@@ -5,11 +5,11 @@ from gtts import gTTS
 st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
 st.title("🥷 NCI Spawn Calculator")
 st.markdown("""
-<div style='text-align:left;font-family:"Arial Black",Gadget,sans-serif;font-size:22px;font-weight:bold;color:#FFD700;text-shadow:0 0 10px #FFD700, 0 0 20px #FF8C00;padding-bottom:12px'>NCI Spawn Calculator</div>
-<style>div.stButton>button:first-child{font-size:20px!important;font-weight:bold!important;padding:10px 24px!important;border-radius:8px!important;border:2px solid #FFD700!important;color:#FFD700!important;background:rgba(0,0,0,0.35)!important;box-shadow:0 0 15px rgba(255,215,0,0.35)!important}div.stButton>button:first-child:hover{background:rgba(255,215,0,0.15)!important;color:#fff!important;border-color:#fff!important}</style>
+<div style='text-align:left;font-family:"Arial Black",Gadget,sans-serif;font-size:22px;font-weight:bold;color:#FFD700;text-shadow:0 0 10px #FFD700, 0 0 20px #FF8C00;padding-bottom:12px'>NCI Spawn Calc[...]
+<style>div.stButton>button:first-child{font-size:20px!important;font-weight:bold!important;padding:10px 24px!important;border-radius:8px!important;border:2px solid #FFD700!important;color:#FFD700!impo[...]
 """, unsafe_allow_html=True)
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 250km away from rivals.")
-st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the fields side-by-side.\n3. The app will calculate the best target tile for your next attack.\n4. Copy the coordinates with the clipboard button next to the target.")
+st.markdown("### 📋 Instructions:\n1. Enter the coordinates of your **first monster spawn** below.\n2. Type the coordinates of your **next spawn** into the fields side-by-side.\n3. The app will calc[...]
 
 HIVE_X, HIVE_Y = 297, 791
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
@@ -18,11 +18,17 @@ for i in range(1, 6):
     st.session_state.setdefault(f"x_{i}", "")
     st.session_state.setdefault(f"y_{i}", "")
 
-if st.button("🗑️ Clear All Fields"):
+
+def clear_fields():
     for i in range(1, 6):
-        st.session_state[f"x_{i}"] = st.session_state[f"y_{i}"] = ""
-        st.session_state.pop(f"field_x_{i}", None); st.session_state.pop(f"field_y_{i}", None)
-    st.rerun()
+        st.session_state[f"x_{i}"] = ""
+        st.session_state[f"y_{i}"] = ""
+        st.session_state[f"field_x_{i}"] = ""
+        st.session_state[f"field_y_{i}"] = ""
+
+
+if st.button("🗑️ Clear All Fields", on_click=clear_fields):
+    pass
 
 st.subheader("📍 Active Spawns")
 spawns, fields = [], []
@@ -47,7 +53,7 @@ for i in range(1, 6):
 
 st.write("---")
 target_x = target_y = true_dist = None
-target_data = pd.DataFrame([{"X_iso":0,"Y_iso":0,"Emoji":"🎯","Label":"Target"}])
+target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
 rivals = [{"X":319,"Y":481,"Tag":"TDK"},{"X":611,"Y":551,"Tag":"CoG"},{"X":673,"Y":771,"Tag":"NFM"}]
 
 if spawns:
