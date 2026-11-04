@@ -6,20 +6,16 @@ def render_minimap(hive_x, hive_y, spawns, rivals, target_data):
     """
     Renders the Altair isometric map layer by layer based on active coordinates.
     """
-    # Evony True World Boundaries centered around the midpoints
     CENTER_X, CENTER_Y = 520, 600
     min_x, max_x = CENTER_X - 350, CENTER_X + 350
     min_y, max_y = CENTER_Y - 350, CENTER_Y + 350
-    
-    # Standard 45-degree isometric projection transformation vectors
     min_x_iso, max_x_iso = min_x - max_y, max_x - min_y
     min_y_iso, max_y_iso = min_x + min_y, max_x + max_y
 
-    # Base Game Entities Matrix
     hive_data = pd.DataFrame([{"X_iso": hive_x - hive_y, "Y_iso": hive_x + hive_y, "Emoji": "🏰", "Label": f"Hive ({hive_x},{hive_y})"}])
     throne_data = pd.DataFrame([{"X_iso": 600 - 600, "Y_iso": 600 + 600, "Emoji": "👑", "Label": "Throne (600,600)"}])
     
-    # GUARANTEED: Exactly 3 structural server map temples explicitly mapped
+    # HARD-FILTERED: Strictly 3 temples allowed on the map dataframe layer
     temple_data = pd.DataFrame([
         {"X_iso": 300 - 900, "Y_iso": 300 + 900, "Emoji": "🏛️", "Label": "Hunter Temple (300,900)"},
         {"X_iso": 300 - 300, "Y_iso": 300 + 300, "Emoji": "🏛️", "Label": "Harvest Temple (300,300)"},
@@ -31,35 +27,27 @@ def render_minimap(hive_x, hive_y, spawns, rivals, target_data):
     
     for r in rivals:
         if min_x <= r["X"] <= max_x and min_y <= r["Y"] <= max_y:
-            # Explicitly restricted to skull icons to prevent rival tags turning into temples
             monster_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Emoji": "💀", "TextLabel": r["Tag"], "Label": f"{r['Tag']} ({r['X']},{r['Y']})"})
             rival_list.append({"X_iso": r["X"] - r["Y"], "Y_iso": r["X"] + r["Y"], "Label": f"{r['Tag']} Danger (250km)"})
             
     spawn_data = pd.DataFrame(monster_list) if monster_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "TextLabel", "Label"])
     danger_data = pd.DataFrame(rival_list) if rival_list else pd.DataFrame(columns=["X_iso", "Y_iso", "Label"])
 
-    # Map Scale Axis Mapping Engine
     x_scale, y_scale = alt.Scale(domain=[min_x_iso, max_x_iso]), alt.Scale(domain=[min_y_iso, max_y_iso])
 
-    # Re-calculate safe teleport coordinate transformation inside this local scope to decouple from app.py anomalies
-    target_data_iso = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label"])
-    if not target_data.empty:
-        try:
-            # Safely look for labeled coordinates passed down
-            label_str = target_data.iloc[0]['Label']
-            if "Target (" in label_str:
-                raw_coords = label_str.split("(")[1].split(")")[0].split(",")
-                tx, ty = int(raw_coords[0]), int(raw_coords[1])
-                target_data_iso = pd.DataFrame([{"X_iso": tx - ty, "Y_iso": tx + ty, "Emoji": "🎯", "Label": f"Target ({tx},{ty})"}])
-        except Exception:
-            target_data_iso = target_data
+    # OVERRIDE FIX: Forces target_data to strictly use '🎯' and drops any incoming columns that could inject another temple 
+    target_data_cleaned = target_data.copy()
+    if not target_data_cleaned.empty:
+        target_data_cleaned['Emoji'] = '🎯'
 
-    # --- Altair Rendering Pipeline Layers ---
     danger_zone_layer = alt.Chart(danger_data).mark_point(color='rgba(255, 0, 0, 0.12)', stroke='#8B0000', strokeWidth=2, filled=True, size=16500).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), tooltip=['Label:N'])
     hive_layer = alt.Chart(hive_data).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
     throne_layer = alt.Chart(throne_data).mark_text(size=38).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
     temple_layer = alt.Chart(temple_data).mark_text(size=32).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
-    target_layer = alt.Chart(target_data_iso).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
+    
+    # Render cleansed target layer
+    target_layer = alt.Chart(target_data_cleaned).mark_text(size=35).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
+    
     monster_emoji_layer = alt.Chart(spawn_data).mark_text(size=28).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='Emoji:N', tooltip=['Label:N'])
     monster_text_layer = alt.Chart(spawn_data).mark_text(size=14, fontWeight='bold', color='white', dx=22, dy=-10).encode(x=alt.X('X_iso:Q', scale=x_scale, axis=None), y=alt.Y('Y_iso:Q', scale=y_scale, axis=None), text='TextLabel:N')
 
