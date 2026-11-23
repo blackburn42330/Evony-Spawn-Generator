@@ -4,8 +4,8 @@ import pandas as pd
 from minimap import render_minimap
 from voice import play_coordinate_narration  # IMPORT VOICE ASYNC PIPELINE
 
-st.set_page_config(page_title="NCI Spawn Calculator", layout="centered")
-st.title("🥷 NCI Spawn Calculator")
+st.set_page_config(page_title="Cog Spawn Calculator", layout="centered")
+st.title("🥷 Cog Spawn Calculator")
 
 st.markdown("""
     <div style='text-align: left; font-family: "Arial Black", sans-serif; font-size: 22px; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px #FFD700; padding-bottom: 15px; margin-top: -10px;'>✨ BBR is an app writing genius ✨</div>
@@ -21,7 +21,7 @@ st.markdown("""
 
 st.write("Finds the closest available coordinate to the hive outside a 150km radius of your spawns and 250km away from rivals.")
 
-HIVE_X, HIVE_Y = 297, 791
+HIVE_X, HIVE_Y = 611, 551
 st.info(f"🏰 **Main Alliance Hive:** ({HIVE_X}, {HIVE_Y})")
 
 for i in range(1, 6):
@@ -50,7 +50,7 @@ for i in range(1, 6):
 
 st.write("---")
 target_data = pd.DataFrame(columns=["X_iso", "Y_iso", "Emoji", "Label", "Name"])
-rivals = [{"X": 673, "Y": 771, "Tag": "NFM"}, {"X": 611, "Y": 551, "Tag": "CoG"}, {"X": 319, "Y": 481, "Tag": "TDK"}]
+rivals = [{"X": 673, "Y": 771, "Tag": "NFM"}, {"X": 297, "Y": 791, "Tag": "NCI"}, {"X": 319, "Y": 481, "Tag": "TDK"}]
 
 if len(spawns) > 0:
     X, Y = np.meshgrid(np.arange(0, 1200), np.arange(0, 1200))
